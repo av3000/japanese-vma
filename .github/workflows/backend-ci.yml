@@ -1,18 +1,5 @@
 name: Backend quality
 
-# What runs when (#708):
-# - pull request: `quality`. `image` too, but only when the PR touches what the production image
-#   is made of (processor-api/.docker, the Composer manifests, this file).
-# - push to develop: `quality`.
-# - push to the default branch (a release): `image` builds the production image once,
-#   smoke-tests it and pushes that same image to GHCR. `migrate` runs when the release changes
-#   migrations, seeders or the permission catalogue, and waits for a reviewer of the `production`
-#   environment. Then `deploy-production` triggers Render and `verify-production` checks the live
-#   service. `quality` is not re-run: the release PR into the default branch ran it.
-#
-# The production queue worker is not deployed from here: its GCP VM is gone, and the Azure
-# worker is #709. The rare manual tasks (migrate on demand, data import, Passport client) live in
-# backend-operations.yml, which `migrate` also calls.
 on:
   push:
     branches: [develop, master]
@@ -25,8 +12,9 @@ on:
       - "processor-api/**"
       - ".github/workflows/backend-ci.yml"
 
-# A new push to a PR cancels that PR's older run. Push runs are never cancelled, so a release is
-# not stopped between a migration and the deploy that needs it.
+# A new push to a pull request cancels that pull request's older run. Runs started by a push to a
+# branch are never cancelled, so a release cannot stop halfway between migrating the database and
+# deploying the code that needs those migrations.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -157,9 +145,11 @@ jobs:
     outputs:
       image: ${{ steps.files.outputs.image }}
     steps:
-      # The image's own inputs: the Dockerfile and Apache config, the dependencies
-      # `composer install` resolves inside the image, and this workflow. Application code is
-      # covered by `quality`.
+      # Decides whether this pull request needs the image build. It does when the pull request
+      # changes how the image is built: the Dockerfiles and Apache config, the Composer files
+      # that `composer install` reads during the build, or this workflow. A pull request that
+      # changes only application code skips the build, because the quality job already tests
+      # that code.
       - name: Check changed files
         id: files
         env:
@@ -179,7 +169,10 @@ jobs:
   image:
     name: Production image
     needs: image-changes
-    # `!cancelled()` lets this run on a push, where `image-changes` is skipped.
+    # Runs on a pull request when `image-changes` found image changes, and on every push to the
+    # default branch. `image-changes` only runs on pull requests, so on a push it is skipped, and
+    # GitHub skips every job that needs a skipped job unless its condition starts with
+    # `!cancelled()`. That prefix is what lets this job run on a push.
     if: >-
       !cancelled() && (
         (github.event_name == 'pull_request' && needs.image-changes.outputs.image == 'true') ||
@@ -198,9 +191,11 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # `load: true` puts the image in the local daemon for the smoke test. On a release, that
-      # same image is then tagged and pushed, so the image that passed the smoke test is the one
-      # that ships. Layers are written to the GitHub Actions cache on releases only.
+      # Builds the image and keeps it on the runner (`load: true`) instead of uploading it, so the
+      # next steps can start it and test it. On a release, the push step uploads this same tested
+      # image; nothing is built a second time, so production gets exactly what passed the tests.
+      # Build layers are cached between runs: pull requests read the cache, and only releases
+      # write to it.
       - name: Build production image
         uses: docker/build-push-action@v6
         with:
@@ -213,8 +208,9 @@ jobs:
           cache-from: type=gha,scope=backend
           cache-to: ${{ github.event_name == 'push' && 'type=gha,mode=max,scope=backend' || '' }}
 
-      # The worker's Redis queue and cache need phpredis; an image without it boots and serves
-      # HTTP, so only this check catches it.
+      # Fails when the PHP Redis extension is missing. Without it the image still starts and
+      # answers HTTP, so the smoke test below would pass, but every queue and cache call to Redis
+      # would fail in production.
       - name: Check PHP extensions
         run: |
           if ! docker run --rm "$SMOKE_IMAGE" php -m | grep -qx 'redis'; then
@@ -222,8 +218,8 @@ jobs:
             exit 1
           fi
 
-      # Proves Apache serves Laravel with production settings: the root page renders and
-      # /api/health answers. SQLite stands in for Postgres, as it did in GitLab (audit M8).
+      # Starts the image with production settings and an empty SQLite database, then fails unless
+      # the home page renders and /api/health answers {"ok":true} within a minute.
       - name: Smoke test production image
         run: |
           smoke_env_file="$(mktemp)"
@@ -299,8 +295,8 @@ jobs:
     outputs:
       migrations: ${{ steps.migrations.outputs.migrations }}
     steps:
-      # Full history: a release merges develop into the default branch, so the diff can span
-      # far more files than the compare API lists.
+      # Fetches the full history, so the next step can compare the previous default-branch commit
+      # with this one however many commits the release brings in.
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
@@ -330,14 +326,14 @@ jobs:
             echo "migrations=false" >> "$GITHUB_OUTPUT"
           fi
 
-  # Runs the image that was just pushed against production, in the `production` environment, so
-  # it waits for that environment's required reviewer. The deploy waits for it.
+  # Migrates the production database with the image this release just pushed. The called workflow
+  # runs in the `production` environment, so this job pauses until a required reviewer approves.
   migrate:
     name: Migrate production database
     needs: [image, release-plan]
-    # Every job after `image` spells out its status checks and starts with `!cancelled()`. On a
-    # push `image-changes` is skipped, and a plain `if:` implies `success()`, which also looks at
-    # skipped ancestors and would skip the whole release chain.
+    # Every job from here on starts with `!cancelled()` and checks the result of each job it
+    # needs. Without that prefix, GitHub would skip these jobs on every release, because
+    # `image-changes` (an earlier job in the chain) is always skipped on a push.
     if: >-
       !cancelled() &&
       needs.image.result == 'success' &&
@@ -355,8 +351,8 @@ jobs:
   deploy-production:
     name: Deploy production backend
     needs: [image, release-plan, migrate]
-    # Deploys only after a published image and, when the release has one, a finished migration.
-    # A failed or rejected migration stops the deploy.
+    # Deploys only when the image was pushed and the migration either succeeded or was not
+    # needed. A failed or rejected migration stops the deploy.
     if: >-
       !cancelled() &&
       github.event_name == 'push' &&
@@ -366,8 +362,8 @@ jobs:
       (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
-      # Read from `secrets` and passed through `env:`, so the hook is masked in run logs
-      # (audit finding H1). Render deploys the service's configured image, `:latest` (audit M4).
+      # The hook URL comes from a secret and is passed through `env:`, so GitHub hides it in the
+      # run logs. Render then deploys the image tag set in the service settings, `:latest`.
       - name: Trigger Render deploy
         env:
           RENDER_BACKEND_DEPLOY_HOOK_URL: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK_URL }}
@@ -379,8 +375,9 @@ jobs:
 
           curl --fail --silent --show-error -X POST "$RENDER_BACKEND_DEPLOY_HOOK_URL"
 
-  # The hook only queues the deploy. Health keeps answering from the old instance until Render
-  # switches over, so this proves the service is up and serving data, not which revision it runs.
+  # Fails unless the live backend answers its health check, home page and kanji list. Render keeps
+  # the previous version answering until the new one is live, so a pass shows the service is up
+  # and returning data, not that it already runs this release.
   verify-production:
     name: Verify production backend
     needs: deploy-production

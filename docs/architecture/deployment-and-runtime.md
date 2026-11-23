@@ -16,7 +16,7 @@ The production topology is intentionally cross-system:
 | One-off production tasks (migrate, data import, Passport client) | GitHub Actions (`backend-operations.yml`), `production` environment |
 | Backend web service | Render, pulling `ghcr.io/av3000/japanese-vma-processor-api` |
 | Real-time transport (Laravel Reverb) | Render, always-on web service `japanese-vma-reverb` running the backend image with `php artisan reverb:start --host=0.0.0.0 --port=$PORT` (ADR 0002) |
-| Queue worker | Not running: the GCP VM is gone; the Azure worker is #709 |
+| Queue worker | Docker Compose (`processor-api/.deploy/worker/`); no production host deployed yet (#709) |
 | Shared Redis queue/cache coordination | Upstash Redis |
 | Primary application persistence | PostgreSQL database configuration |
 
@@ -25,8 +25,7 @@ This review verified repository configuration and contributor guidance. It did n
 **The Reverb row is a target, not a verified deployment.** The application code and the channel
 authorisation are in the repository, but the
 Render service and the platform variables it needs have not been created yet (issue #262). Until
-they are, every client falls back to polling. The worker's `REVERB_*` guard and the Reverb
-reachability check left with the GitLab pipeline (#708) and return with the Azure worker (#709).
+they are, every client falls back to polling.
 
 ## Deployment Flow
 
@@ -74,7 +73,7 @@ In production `allowed_origins` defaults to an empty list, so a Reverb service w
 
 The backend release runs: image build and smoke test, push to GHCR, migrations (only when the release changes migrations, seeders or the permission catalogue, and only after a reviewer of the `production` environment approves), the Render web deploy, then verification. A failed or rejected migration stops the deploy, so new web code never runs against an unmigrated schema.
 
-The GitLab pipeline also deployed and verified the worker, then checked Reverb, before the web deploy, so newly deployed web code could not enqueue jobs that no compatible worker could consume. That step left with the GCP VM; it returns with the Azure worker (#709). Until then, nothing consumes the production queue.
+No production worker is deployed yet, so nothing consumes the production queue. When it is (#709), the worker must be deployed and verified before the web deploy, so new web code never enqueues jobs that no compatible worker can run.
 
 Any production change involving jobs, serialization, queue names, Redis behavior, or environment variables must be reviewed across:
 
@@ -101,7 +100,7 @@ neither has a v1 successor, and both are retained deliberately rather than pendi
 
 | Endpoint | Defined in | Role | Owner | Revisit when |
 | --- | --- | --- | --- | --- |
-| `GET api/health` | `processor-api/routes/api.php` | Container and orchestrator liveness probe. Consumed by the Compose healthchecks and the Render/GCP runtime, not by the frontend. | Deployment/runtime | The hosting platform stops polling it, or a versioned health contract is introduced for it. Changing its path or payload is a deploy-configuration change, not an API change. |
+| `GET api/health` | `processor-api/routes/api.php` | Container and orchestrator liveness probe. Consumed by the Compose healthchecks and the Render runtime, not by the frontend. | Deployment/runtime | The hosting platform stops polling it, or a versioned health contract is introduced for it. Changing its path or payload is a deploy-configuration change, not an API change. |
 | `POST api/broadcasting/auth` | `processor-api/app/Providers/BroadcastServiceProvider.php` | Laravel Echo private-channel authorization for the `App.User.{id}` and `last_operations.{uuid}` channels in `routes/channels.php`. Authorizes channel subscriptions, not sessions. | Async processing/broadcasting | Broadcasting is removed, or the channel authorization moves behind a versioned route. Its `auth:api` middleware is shared with the rest of the API, so Passport guard changes must consider it. |
 
 Because `Broadcast::routes()` registers its route from the service provider, edits to
@@ -128,7 +127,7 @@ Repository evidence supports these checks:
 - backend health and route inspection through the Laravel container;
 - backend feature tests through the dedicated Docker test lane;
 - backend image smoke test and live verification through `backend-ci.yml`;
-- worker verification through backend operational command tests (the deploy-time check returns with #709).
+- worker behaviour through backend operational command tests.
 
 Provider-level verification remains an operational action. A documentation review cannot confirm:
 

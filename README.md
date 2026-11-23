@@ -52,7 +52,7 @@ Every HTTP contract lives in `processor-api/routes/api_v1.php`. `processor-api/r
 - Frontend verification and deploy flow lives in `.github/workflows/frontend-ci.yml`.
 - Backend image build, release, and verification flow lives in `.github/workflows/backend-ci.yml`; manual production tasks live in `.github/workflows/backend-operations.yml`.
 - The live backend web service runs on Render from the GHCR image.
-- Production queue workers run separately via Docker Compose; their GCP VM is gone and the Azure host is #709.
+- Production queue workers run separately via Docker Compose; no production worker host is deployed yet (#709).
 - Upstash Redis coordinates queue and cache behavior in production.
 
 ## Getting Started

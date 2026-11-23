@@ -67,7 +67,7 @@ This polymorphic boundary requires careful validation: numeric IDs, UUIDs, and o
 | GitHub Actions | `.github/workflows/frontend-ci.yml`, `backend-ci.yml`, `backend-operations.yml` | Configuration verified |
 | GHCR | Image names in the workflows | Configuration verified; package visibility open |
 | Render | Pipeline and repository guidance | Configuration verified; provider state open |
-| Worker host | `processor-api/.deploy/worker/` | GCP VM gone; Azure host pending (#709) |
+| Worker host | `processor-api/.deploy/worker/` | No production host deployed yet (#709) |
 | Upstash Redis | Repository guidance and environment/config references | Intended production dependency; live connection open |
 | Sentry | Frontend provider/dependency references | Client integration present; project ingestion open |
 | Laravel Reverb | `processor-api/routes/channels.php`, `App\Application\Processing\Events\ProcessingStatusUpdated`, `client/src/lib/echo/` | Application wiring verified; the pipeline's Reverb check returns with #709; Render service and `REVERB_*` variables not yet provisioned (#262), so live channel health remains open |

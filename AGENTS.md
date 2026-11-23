@@ -18,7 +18,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 
 - **Frontend live hosting:** `.github/workflows/frontend-ci.yml` builds the frontend image and triggers the Render deploy; see `docs/architecture/deployment-and-runtime.md` for the whole runtime.
 - **Backend live hosting:** Render hosts the live Laravel API/web service, pulling the backend image from GHCR.
-- **Queue / worker runtime:** No production queue worker runs right now: its GCP VM is gone, and the Azure replacement is #709. The worker runs from Docker Compose (`processor-api/.deploy/worker/`), not on Render.
+- **Queue / worker runtime:** The queue worker runs from Docker Compose (`processor-api/.deploy/worker/`), not on Render. No production worker host is deployed yet (#709).
 - **Queue backend:** Upstash Redis is used for live Redis-backed queue/cache coordination.
 - **Backend deployment flow:** On a push to `master`, `.github/workflows/backend-ci.yml` builds and smoke-tests the backend image, pushes it to GHCR, runs migrations behind the `production` environment's approval when the release changes them, triggers the Render backend deploy, then verifies the live service. One-off production tasks (migrate, data import, Passport client) run from `.github/workflows/backend-operations.yml`.
 - **Rule for agents:** Treat live environment changes as cross-system work. Check backend config, worker compose/runtime, CI/CD, and docs together before proposing or implementing production changes.

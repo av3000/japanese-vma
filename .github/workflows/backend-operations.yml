@@ -1,21 +1,10 @@
 name: Backend operations
 
-# One-off tasks against the production database (#708), replacing GitLab's manual jobs:
-# - migrate: migrations plus the seeders every release needs. backend-ci.yml calls this on a
-#   release that changes migrations; start it by hand to re-run them (GitLab's
-#   FORCE_SHOW_MIGRATE_JOB).
-# - import-japanese-data: builds Dockerfile.import from the chosen ref and runs the import
-#   (GitLab's SHOW_IMPORT_JAPANESE_DATA_JOB). Built on demand, not on every release.
-# - setup-passport-client: creates the Passport personal access client (GitLab's
-#   SHOW_SETUP_PASSPORT_JOB).
-#
-# The job runs in the `production` environment. Its required reviewers are the manual gate, and
-# its secrets are the production connection values.
 on:
   workflow_dispatch:
     inputs:
       task:
-        description: Task to run against production
+        description: "Task to run against production: migrate (migrations and required seeders), import-japanese-data (dictionary data), setup-passport-client (personal access client)"
         required: true
         type: choice
         options:
@@ -28,7 +17,8 @@ on:
         default: latest
         type: string
       allow_rerun:
-        description: import-japanese-data only, pass --allow-rerun
+        description: import-japanese-data only. Clear the imported tables and import again, even if an import already completed
+
         required: false
         default: false
         type: boolean
@@ -57,7 +47,8 @@ jobs:
     name: ${{ inputs.task }}
     runs-on: ubuntu-latest
     environment: production
-    # Two tasks never write to the production database at the same time; a second one queues.
+    # Only one task runs against the production database at a time; a second one waits for the
+    # first to finish.
     concurrency:
       group: backend-production-database
       cancel-in-progress: false
@@ -73,8 +64,9 @@ jobs:
             *) echo "Unknown task: $TASK"; exit 1 ;;
           esac
 
-      # Values come from the `production` environment's secrets and variables and are passed
-      # through `env:`, so they are masked in run logs. The file is deleted when the job ends.
+      # Writes the production connection settings, taken from the `production` environment's
+      # secrets, into a file the container reads at start. Passing them through `env:` keeps them
+      # hidden in the run logs, and the last step deletes the file.
       - name: Write runtime env file
         env:
           APP_KEY: ${{ secrets.APP_KEY }}
@@ -154,7 +146,8 @@ jobs:
         if: inputs.task == 'import-japanese-data'
         uses: actions/checkout@v6
 
-      # The import image is built from the repository root of the chosen ref and never pushed.
+      # Builds the import image from this branch's source on the runner. It is used once, here,
+      # and never uploaded to a registry.
       - name: Build import image
         if: inputs.task == 'import-japanese-data'
         run: docker build --pull -f processor-api/.docker/Dockerfile.import -t "$IMPORT_IMAGE" .
