@@ -4,10 +4,10 @@
 |---|---|
 | Epic | [#659 TRANSLATIONS](https://github.com/av3000/japanese-vma/issues/659) |
 | Milestone | Translation Management |
-| Status | In progress: US-01 and US-02 delivered |
+| Status | First delivery complete (US-01 to US-07, PR #704). FR-15 and NFR-07 changed for [#705](https://github.com/av3000/japanese-vma/issues/705) |
 | Design | [2026-08-18 design specification](./2026-08-18-translation-management-design.md) (how). This document covers the what. |
 | Plan | [implementation-plan.md](./implementation-plan.md): branch model, per-story loop, story sections, run prompt |
-| Last updated | 2026-11-15 |
+| Last updated | 2026-11-23 |
 
 ## 1. Goal
 
@@ -66,7 +66,7 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-12 | The React client exposes translations through one `TranslationProvider` and a `t(key)` hook. Components never fetch bundles directly. `t()` accepts only known keys, typed from the English snapshot, so a key typo fails type-checking. It returns the key itself when the key is missing from both the bundle and the snapshot, and warns about it in development builds only. |
 | FR-13 | The client chooses its locale in this order: the persisted choice if still active, then a supported browser base language, then `en`. The choice is persisted locally, and `<html lang>` follows the active locale. |
 | FR-14 | Changing language fetches one complete bundle and updates visible labels without a page reload. |
-| FR-15 | The header language selector is shown only when more than one locale is active. |
+| FR-15 | The header always shows the language control: the current language's code and a globe icon. With one active locale it cannot be opened and says why. With more, it opens a chooser: a modal from 1024px, a drawer below. (Changed 2026-11-22. The first delivery shows the selector only when more than one locale is active.) |
 | FR-16 | A representative set of surfaces reads its labels through `t()`: header account controls, the Login form, shared form buttons and one empty state. Strings not yet migrated stay hard-coded English. |
 
 ## 6. Non-functional requirements
@@ -79,7 +79,7 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | NFR-04 | Contract | Endpoints are documented through Scramble. The client types come from `composer openapi` then `npm run orval:file`, and generated files are never hand-edited. |
 | NFR-05 | Accessibility | The language selector is keyboard-operable and labelled, and names the current language in text, not by colour or flag alone. `<html lang>` matches the shown language. |
 | NFR-06 | Resilience | The client never shows blank labels. The previous bundle stays rendered while a new one loads and when a request fails, and the failure shows as a non-blocking error. |
-| NFR-07 | Compatibility | With only English active, the live UI is unchanged and shows no selector. All schema changes are additive, so the change is a two-way door. |
+| NFR-07 | Compatibility | With only English active, every label reads as before, and the only addition is the language control that cannot be opened. All schema changes are additive, so the change is a two-way door. (Changed 2026-11-22 with FR-15.) |
 | NFR-08 | Verification | DB-backed tests run in the Docker test lane. UI states have Vitest tests and Storybook stories. The PR carries desktop, tablet and mobile screenshots. |
 | NFR-09 | Concurrency | Concurrent edits to the same key resolve as last write wins. Timestamps are kept for diagnosis, and optimistic locking is out of scope. |
 
@@ -117,7 +117,7 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | FR-12 | US-06 | Delivered |
 | FR-13 | US-06 | Delivered |
 | FR-14 | US-06, US-07 (end to end) | Delivered: the provider and selector (US-06); the end-to-end proof runs with the HTTP call stubbed (US-07), and a live Filament run is still owed |
-| FR-15 | US-06 | Delivered |
+| FR-15 | US-06, [#706](https://github.com/av3000/japanese-vma/issues/706) | First rule delivered (US-06); the changed rule is planned in #706 |
 | FR-16 | US-07 | Delivered |
 | NFR-01 | US-02, US-04 | Delivered |
 | NFR-02 | US-02, US-05 | Delivered: no cache (US-02), and the editor save is live in the next bundle (US-05) |
@@ -125,8 +125,8 @@ Each issue holds that story's acceptance criteria in Given/When/Then form. This 
 | NFR-04 | US-01 | Delivered |
 | NFR-05 | US-06 | Delivered |
 | NFR-06 | US-06 | Delivered |
-| NFR-07 | US-06, US-07 | Delivered: English-only shows no selector (US-06) and the migrated surfaces render the same English text (US-07) |
-| NFR-08 | all | Planned |
+| NFR-07 | US-06, US-07, #706 | First rule delivered: English-only shows no selector (US-06) and the migrated surfaces render the same English text (US-07); the changed rule is planned in #706 |
+| NFR-08 | all | Delivered: each story PR (#668 to #702) carries its tests, stories and screenshots |
 | NFR-09 | US-02, US-05 | Delivered: last write wins in the upsert (US-02) and the editor save (US-05) |
 
 Each story's commit updates its rows to **Delivered**. When the epic merges, this document is reviewed again. Once the code and tests show the rules on their own, it is removed or reduced.
@@ -135,4 +135,5 @@ Each story's commit updates its rows to **Delivered**. When the epic merges, thi
 
 | Date | Change |
 |---|---|
+| 2026-11-22 | After running the first delivery locally: FR-15 and NFR-07 now keep the language control always visible, disabled while only English is active, opening a modal from 1024px and a drawer below. Decisions V2-D1 to V2-D3 and their trade-offs are on [#705](https://github.com/av3000/japanese-vma/issues/705); delivery is [#706](https://github.com/av3000/japanese-vma/issues/706). |
 | 2026-11-08 | Compared with a reference codebase's translation system (Project K). FR-05 now records the editing user, FR-09 opens the overview on Missing, and FR-12 types the keys and warns about missing keys in development builds. The decisions and their trade-offs are in [implementation-plan.md](./implementation-plan.md) §4.6. |
