@@ -93,5 +93,4 @@ final class ViewerCatalogueStateServiceTest extends TestCase
             new \DateTimeImmutable,
         );
     }
-
 }

@@ -20,7 +20,8 @@ final readonly class Radical
         private ?string $meaning,
         private ?string $hiragana,
         private array $kanjis = [],
-    ) {}
+    ) {
+    }
 
     public function getIdValue(): int
     {

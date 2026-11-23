@@ -20,7 +20,8 @@ final readonly class ViewerCatalogueStateService
     }
 
     /**
-     * @param  int[]  $itemIds
+     * @param int[] $itemIds
+     *
      * @return array<int, ViewerCatalogueStateDTO>
      */
     public function forItems(
@@ -75,7 +76,8 @@ final readonly class ViewerCatalogueStateService
     }
 
     /**
-     * @param  Catalogue[]  $catalogues
+     * @param Catalogue[] $catalogues
+     *
      * @return int[]
      */
     private function catalogueIdsForType(array $catalogues, SavedListType $type): array
@@ -90,8 +92,8 @@ final readonly class ViewerCatalogueStateService
     }
 
     /**
-     * @param  int[]  $containedCatalogueIds
-     * @param  int[]  $targetCatalogueIds
+     * @param int[] $containedCatalogueIds
+     * @param int[] $targetCatalogueIds
      */
     private function containsAny(array $containedCatalogueIds, array $targetCatalogueIds): bool
     {
@@ -99,7 +101,8 @@ final readonly class ViewerCatalogueStateService
     }
 
     /**
-     * @param  int[]  $itemIds
+     * @param int[] $itemIds
+     *
      * @return array<int, ViewerCatalogueStateDTO>
      */
     private function emptyStates(array $itemIds, bool $includeKnown): array

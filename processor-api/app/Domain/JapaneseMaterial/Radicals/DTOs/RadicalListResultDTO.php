@@ -15,5 +15,6 @@ final readonly class RadicalListResultDTO
     public function __construct(
         public array $items,
         public array $pagination,
-    ) {}
+    ) {
+    }
 }

@@ -3,11 +3,11 @@
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Engagement\Interfaces\Repositories\DownloadRepositoryInterface;
-use App\Domain\Engagement\DTOs\{DownloadCreateDTO, DownloadFilterDTO};
-use App\Infrastructure\Persistence\Models\Download;
+use App\Domain\Engagement\DTOs\DownloadCreateDTO;
+use App\Domain\Engagement\DTOs\DownloadFilterDTO;
 use App\Domain\Shared\Enums\ObjectTemplateType;
+use App\Infrastructure\Persistence\Models\Download;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 
 class DownloadRepository implements DownloadRepositoryInterface
 {

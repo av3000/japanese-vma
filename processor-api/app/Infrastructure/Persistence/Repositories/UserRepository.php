@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Application\Users\Interfaces\Repositories\UserRepositoryInterface;
-use App\Infrastructure\Persistence\Models\User as PersistenceUser;
-use App\Domain\Users\Models\User as DomainUser;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\Pagination;
 use App\Domain\Shared\ValueObjects\UserId;
-use App\Domain\Users\Queries\UserQueryCriteria;
 use App\Domain\Shared\ValueObjects\UserSortCriteria;
+use App\Domain\Users\Models\User as DomainUser;
 use App\Domain\Users\Models\Users;
+use App\Domain\Users\Queries\UserQueryCriteria;
+use App\Infrastructure\Persistence\Models\User as PersistenceUser;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 
@@ -20,7 +20,8 @@ class UserRepository implements UserRepositoryInterface
 {
     public function __construct(
         private readonly UserMapper $userMapper
-    ) {}
+    ) {
+    }
 
     /**
      * Find user ID by user UUID
@@ -28,6 +29,7 @@ class UserRepository implements UserRepositoryInterface
     public function getIdByUuid(EntityId $entityUuid): ?UserId
     {
         $userId = PersistenceUser::where('uuid', $entityUuid->value())->value('id');
+
         return UserId::from($userId);
     }
 
@@ -35,6 +37,7 @@ class UserRepository implements UserRepositoryInterface
      * Find user by UUID
      *
      * @param EntityId $userUuid The user's public UUID
+     *
      * @return DomainUser|null The domain user if found, null if not found
      */
     public function findByUuid(EntityId $userUuid): ?DomainUser
@@ -50,7 +53,6 @@ class UserRepository implements UserRepositoryInterface
      * Finds users based on the given criteria.
      *
      * @param UserQueryCriteria|null $criteria Optional criteria for filtering.
-     * @return Users
      */
     public function find(?UserQueryCriteria $criteria = null): Users
     {
@@ -66,12 +68,11 @@ class UserRepository implements UserRepositoryInterface
         $perPage = $criteria?->pagination?->per_page ?? Pagination::DEFAULT_PER_PAGE;
         $page = $criteria?->pagination?->page ?? Pagination::MIN_PAGE;
 
-
         /** @var \Illuminate\Pagination\LengthAwarePaginator $paginatedResults */
         $paginatedResults = $query->paginate($perPage, ['*'], 'page', $page);
 
         $domainUsers = $paginatedResults->getCollection()
-            ->map(fn(PersistenceUser $persistenceUser) => $this->userMapper->mapToDomain($persistenceUser));
+            ->map(fn (PersistenceUser $persistenceUser) => $this->userMapper->mapToDomain($persistenceUser));
 
         $paginatedResults->setCollection($domainUsers);
 
@@ -81,10 +82,6 @@ class UserRepository implements UserRepositoryInterface
     // TODO: Consider UserQueryBuilder class pattern
     /**
      * Apply filters from UserQueryCriteria to the Eloquent query builder.
-     *
-     * @param Builder $query
-     * @param UserQueryCriteria $criteria
-     * @return void
      */
     private function applyFilters(Builder $query, UserQueryCriteria $criteria): void
     {
@@ -97,11 +94,11 @@ class UserRepository implements UserRepositoryInterface
         }
 
         if ($criteria->name !== null) {
-            $query->where('name', 'LIKE', '%' . $criteria->name->value() . '%');
+            $query->where('name', 'LIKE', '%'.$criteria->name->value().'%');
         }
 
         if ($criteria->role !== null) {
-            $query->whereHas('roles', fn($q) => $q->where('name', $criteria->role));
+            $query->whereHas('roles', fn ($q) => $q->where('name', $criteria->role));
         }
 
         if ($criteria->includeInactive) {
@@ -118,10 +115,6 @@ class UserRepository implements UserRepositoryInterface
 
     /**
      * Apply sorting from UserSortCriteria to the Eloquent query builder.
-     *
-     * @param Builder $query
-     * @param UserSortCriteria|null $sort
-     * @return void
      */
     private function applySorting(Builder $query, ?UserSortCriteria $sort): void
     {
@@ -167,7 +160,6 @@ class UserRepository implements UserRepositoryInterface
         return $tokenResult->accessToken;
     }
 
-
     /**
      * Revoke a specific access token
      */
@@ -212,7 +204,7 @@ class UserRepository implements UserRepositoryInterface
             ->where('email', $email)
             ->first();
 
-        if (!$persistenceUser) {
+        if (! $persistenceUser) {
             return null;
         }
 
@@ -229,7 +221,7 @@ class UserRepository implements UserRepositoryInterface
     {
         $user = PersistenceUser::find($userId->value());
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 

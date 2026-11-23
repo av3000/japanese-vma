@@ -10,8 +10,8 @@ final readonly class KanjiCharacter
 {
     public function __construct(public string $value)
     {
-        if (!self::isValid($value)) {
-            throw new InvalidArgumentException('Invalid Kanji character: ' . $value);
+        if (! self::isValid($value)) {
+            throw new InvalidArgumentException('Invalid Kanji character: '.$value);
         }
     }
 

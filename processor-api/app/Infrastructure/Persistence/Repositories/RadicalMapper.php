@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Persistence\Repositories;
 
-use App\Domain\JapaneseMaterial\Radicals\Models\Radical as DomainRadical;
 use App\Domain\JapaneseMaterial\Kanjis\ValueObjects\KanjiCharacter;
+use App\Domain\JapaneseMaterial\Radicals\Models\Radical as DomainRadical;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Infrastructure\Persistence\Models\Kanji as PersistenceKanji;
 use App\Infrastructure\Persistence\Models\Radical as PersistenceRadical;
@@ -14,7 +14,8 @@ class RadicalMapper
 {
     public function __construct(
         private readonly KanjiMapper $kanjiMapper,
-    ) {}
+    ) {
+    }
 
     public function mapToDomain(PersistenceRadical $persistenceRadical): DomainRadical
     {
