@@ -44,8 +44,9 @@ sequenceDiagram
     GHA->>Render: trigger frontend deploy
 
     GHA->>GHA: build backend image, smoke test
-    GHA->>Registry: push japanese-vma-processor-api (sha-<sha>, latest)
-    GHA->>GHA: migrate (only when migrations change, after approval)
+    GHA->>Registry: push japanese-vma-processor-api:sha-<sha>
+    GHA->>GHA: migrate (only when migrations changed since the last successful release, after approval)
+    GHA->>Registry: tag sha-<sha> as latest
     GHA->>Render: trigger backend web deploy
     Render->>Registry: pull latest image
     GHA->>Render: verify health, root page, kanji data
@@ -71,7 +72,7 @@ In production `allowed_origins` defaults to an empty list, so a Reverb service w
 
 ## Deployment Ordering
 
-The backend release runs: image build and smoke test, push to GHCR, migrations (only when the release changes migrations, seeders or the permission catalogue, and only after a reviewer of the `production` environment approves), the Render web deploy, then verification. A failed or rejected migration stops the deploy, so new web code never runs against an unmigrated schema.
+The backend release runs: image build and smoke test, push to GHCR under the commit tag, migrations (only when migrations, seeders or the permission catalogue changed since the last successful release, and only after a reviewer of the `production` environment approves), moving `:latest` to the new image, the Render web deploy, then verification. A failed or rejected migration stops the release before `:latest` moves, so new web code never runs against an unmigrated schema, and the next release runs the migrations it left behind.
 
 No production worker is deployed yet, so nothing consumes the production queue. When it is (#709), the worker must be deployed and verified before the web deploy, so new web code never enqueues jobs that no compatible worker can run.
 

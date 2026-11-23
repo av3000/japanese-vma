@@ -12,9 +12,11 @@ on:
       - "processor-api/**"
       - ".github/workflows/backend-ci.yml"
 
-# A new push to a pull request cancels that pull request's older run. Runs started by a push to a
-# branch are never cancelled, so a release cannot stop halfway between migrating the database and
-# deploying the code that needs those migrations.
+# A new push to a pull request cancels that pull request's older run. A running release is never
+# cancelled, so it cannot stop halfway between migrating the database and deploying the code that
+# needs those migrations. GitHub keeps only one waiting run per group, though: a third push to
+# `master` replaces a release that was still waiting to start. The next release then migrates and
+# deploys everything since the last successful release, so nothing is lost.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -146,8 +148,9 @@ jobs:
       image: ${{ steps.files.outputs.image }}
     steps:
       # Decides whether this pull request needs the image build. It does when the pull request
-      # changes how the image is built: the Dockerfiles and Apache config, the Composer files
-      # that `composer install` reads during the build, or this workflow. A pull request that
+      # changes how the image is built: the Dockerfiles and Apache config, the `.dockerignore`
+      # that decides which files the image copies, the Composer files that `composer install`
+      # reads during the build, or this workflow. A pull request that
       # changes only application code skips the build, because the quality job already tests
       # that code.
       - name: Check changed files
@@ -159,7 +162,7 @@ jobs:
         run: |
           changed="$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')"
 
-          if printf '%s\n' "$changed" | grep -Eq '^(processor-api/\.docker/|processor-api/composer\.(json|lock)$|\.github/workflows/backend-ci\.yml$)'; then
+          if printf '%s\n' "$changed" | grep -Eq '^(processor-api/\.docker/|processor-api/\.dockerignore$|processor-api/composer\.(json|lock)$|\.github/workflows/backend-ci\.yml$)'; then
             echo "image=true" >> "$GITHUB_OUTPUT"
           else
             echo "No image inputs changed; the production image build is skipped."
@@ -280,40 +283,56 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Uploads the tested image under its commit tag only. Render deploys `:latest`, which
+      # `deploy-production` moves to this image once the database is migrated, so Render never
+      # runs code whose migrations have not run.
       - name: Push backend image
         if: env.IS_RELEASE == 'true'
         run: |
-          for tag in "sha-$GITHUB_SHA" latest; do
-            docker tag "$SMOKE_IMAGE" "$REGISTRY/$IMAGE_NAME:$tag"
-            docker push "$REGISTRY/$IMAGE_NAME:$tag"
-          done
+          docker tag "$SMOKE_IMAGE" "$REGISTRY/$IMAGE_NAME:sha-$GITHUB_SHA"
+          docker push "$REGISTRY/$IMAGE_NAME:sha-$GITHUB_SHA"
 
   release-plan:
     name: Plan release
     if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
       migrations: ${{ steps.migrations.outputs.migrations }}
     steps:
-      # Fetches the full history, so the next step can compare the previous default-branch commit
-      # with this one however many commits the release brings in.
+      # Fetches the full history, so the next step can compare the last successful release with
+      # this one however many commits lie between them.
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
+      # Compares this release with the last release run that finished successfully, which is the
+      # last one whose migrations ran and whose code reached Render. A release that failed, was
+      # rejected or was cancelled therefore leaves its migrations for the next release to run.
+      # When there is no successful release yet, or its commit is not in this branch's history,
+      # the release is treated as changing migrations.
       - name: Check for migration changes
         id: migrations
         env:
-          BEFORE_SHA: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          if [ -z "$BEFORE_SHA" ] || ! git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
-            echo "No usable previous commit; treating the release as changing migrations."
+          last_release_sha="$(gh api \
+            "repos/$REPO/actions/workflows/backend-ci.yml/runs?branch=$DEFAULT_BRANCH&event=push&status=success&per_page=1" \
+            --jq '.workflow_runs[0].head_sha // empty')"
+
+          if [ -z "$last_release_sha" ] || ! git merge-base --is-ancestor "$last_release_sha" "$GITHUB_SHA" 2>/dev/null; then
+            echo "No earlier successful release in this branch's history; treating the release as changing migrations."
             echo "migrations=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          changed="$(git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA" -- \
+          echo "Comparing with the last successful release, $last_release_sha."
+          changed="$(git diff --name-only "$last_release_sha" "$GITHUB_SHA" -- \
             'processor-api/database/migrations' \
             'processor-api/database/seeders' \
             'processor-api/config/permission-catalog.php')"
@@ -361,7 +380,28 @@ jobs:
       needs.release-plan.result == 'success' &&
       (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Points `:latest` at the image this release tested and pushed. The registry copies the tag
+      # without downloading the image.
+      - name: Tag release image as latest
+        run: |
+          docker buildx imagetools create \
+            --tag "$REGISTRY/$IMAGE_NAME:latest" \
+            "$REGISTRY/$IMAGE_NAME:sha-$GITHUB_SHA"
+
       # The hook URL comes from a secret and is passed through `env:`, so GitHub hides it in the
       # run logs. Render then deploys the image tag set in the service settings, `:latest`.
       - name: Trigger Render deploy
