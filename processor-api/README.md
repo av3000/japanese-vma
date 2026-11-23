@@ -243,8 +243,8 @@ php artisan boost:update
 
 Production behavior spans more than just Render:
 
--   `.gitlab-ci.yml` builds and verifies the backend image
--   the worker runtime is deployed separately to a GCP VM over SSH
+-   `.github/workflows/backend-ci.yml` builds, verifies and publishes the backend image to GHCR, then deploys it
+-   the worker runtime is deployed separately (its GCP VM is gone; the Azure host is #709)
 -   Render serves the live backend web application
 -   Upstash Redis is used for live queue and cache coordination
 

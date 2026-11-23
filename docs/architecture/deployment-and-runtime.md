@@ -1,8 +1,8 @@
 # Deployment and Runtime
 
 > **Status:** Baseline; repository configuration verified, provider state unverified
-> **Last reviewed:** 2026-09-20
-> **Evidence baseline:** Repository working tree and `.gitlab-ci.yml` inspected on 2026-09-20; provider dashboards not inspected
+> **Last reviewed:** 2026-11-23
+> **Evidence baseline:** Repository working tree and `.github/workflows/backend-ci.yml` inspected on 2026-11-23 (#708); provider dashboards not inspected
 > **Audience:** Engineers, operators, incident responders, and reviewers
 
 ## Runtime Topology
@@ -12,20 +12,21 @@ The production topology is intentionally cross-system:
 | Concern | Configured owner |
 |---|---|
 | Frontend verification and deploy | GitHub Actions |
-| Backend image build and orchestration | GitLab CI |
-| Backend web service | Render |
+| Backend image build and orchestration | GitHub Actions (`backend-ci.yml`), image in GHCR |
+| One-off production tasks (migrate, data import, Passport client) | GitHub Actions (`backend-operations.yml`), `production` environment |
+| Backend web service | Render, pulling `ghcr.io/av3000/japanese-vma-processor-api` |
 | Real-time transport (Laravel Reverb) | Render, always-on web service `japanese-vma-reverb` running the backend image with `php artisan reverb:start --host=0.0.0.0 --port=$PORT` (ADR 0002) |
-| Queue worker | Docker Compose on a GCP VM |
+| Queue worker | Not running: the GCP VM is gone; the Azure worker is #709 |
 | Shared Redis queue/cache coordination | Upstash Redis |
 | Primary application persistence | PostgreSQL database configuration |
 
 This review verified repository configuration and contributor guidance. It did not inspect provider dashboards or make live requests.
 
-**The Reverb row is a target, not a verified deployment.** The application code, the channel
-authorisation, the CI wiring and the `verify_reverb` job are all in the repository, but the
+**The Reverb row is a target, not a verified deployment.** The application code and the channel
+authorisation are in the repository, but the
 Render service and the platform variables it needs have not been created yet (issue #262). Until
-they are, the backend pipeline fails deliberately on the missing `REVERB_*` variables rather
-than deploying a worker that cannot broadcast, and every client falls back to polling.
+they are, every client falls back to polling. The worker's `REVERB_*` guard and the Reverb
+reachability check left with the GitLab pipeline (#708) and return with the Azure worker (#709).
 
 ## Deployment Flow
 
@@ -33,26 +34,23 @@ than deploying a worker that cannot broadcast, and every client falls back to po
 sequenceDiagram
     participant Git as Source repository
     participant GHA as GitHub Actions
-    participant GL as GitLab CI
-    participant Registry as Container registry
-    participant GCP as GCP worker VM
+    participant Registry as GHCR
     participant Render as Render web service
     participant Reverb as Render Reverb service
     participant Redis as Upstash Redis
 
-    Git->>GHA: frontend workflow trigger
-    GHA->>GHA: install, verify, build
-    GHA-->>GHA: publish frontend artifact/site
+    Git->>GHA: push to master (release)
+    GHA->>GHA: build frontend image, smoke test
+    GHA->>Registry: push japanese-vma-client
+    GHA->>Render: trigger frontend deploy
 
-    Git->>GL: backend pipeline trigger
-    GL->>Registry: build and publish backend image
-    GL->>GCP: deploy worker over SSH
-    GCP->>Redis: start worker against shared queue
-    GL->>GCP: verify worker
-    GL->>Reverb: verify Reverb answers (verify_reverb)
-    GL->>Render: trigger backend web deploy
+    GHA->>GHA: build backend image, smoke test
+    GHA->>Registry: push japanese-vma-processor-api (sha-<sha>, latest)
+    GHA->>GHA: migrate (only when migrations change, after approval)
+    GHA->>Render: trigger backend web deploy
+    Render->>Registry: pull latest image
+    GHA->>Render: verify health, root page, kanji data
     Render->>Redis: use shared cache/queue configuration
-    GCP-->>Reverb: broadcast processing status (worker)
     Render-->>Reverb: broadcast pending status (web)
     Reverb-->>Browser: private channel events
 ```
@@ -67,20 +65,22 @@ Configuration lives in platform variables, never in the repository:
 |---|---|
 | Render Reverb service | `APP_KEY`, `APP_ENV=production`, `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `REVERB_SERVER_HOST=0.0.0.0`, `REVERB_SERVER_PORT=$PORT`, `REVERB_ALLOWED_ORIGINS=<frontend origin>`, `REVERB_SCALING_ENABLED=false` |
 | Render API web service | `BROADCAST_DRIVER=reverb`, `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `REVERB_HOST=<reverb hostname>`, `REVERB_PORT=443`, `REVERB_SCHEME=https`, and `QUEUE_CONNECTION=redis` |
-| GitLab CI (worker) | the same `REVERB_*` values; `prepare_queue_runtime_env` fails when any is missing |
+| Worker host (#709) | the same `REVERB_*` values |
 | GitHub repository variables (frontend) | `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT=443`, `VITE_REVERB_SCHEME=https`; the workflow fails when the first two are missing |
 
 In production `allowed_origins` defaults to an empty list, so a Reverb service without `REVERB_ALLOWED_ORIGINS` refuses every browser rather than admitting all of them.
 
 ## Deployment Ordering
 
-The configured backend sequence deploys and verifies the worker, then verifies the Reverb service answers, before triggering the Render web deployment. That ordering reduces the chance that newly deployed web code enqueues jobs that no compatible worker can consume.
+The backend release runs: image build and smoke test, push to GHCR, migrations (only when the release changes migrations, seeders or the permission catalogue, and only after a reviewer of the `production` environment approves), the Render web deploy, then verification. A failed or rejected migration stops the deploy, so new web code never runs against an unmigrated schema.
+
+The GitLab pipeline also deployed and verified the worker, then checked Reverb, before the web deploy, so newly deployed web code could not enqueue jobs that no compatible worker could consume. That step left with the GCP VM; it returns with the Azure worker (#709). Until then, nothing consumes the production queue.
 
 Any production change involving jobs, serialization, queue names, Redis behavior, or environment variables must be reviewed across:
 
 - application configuration;
 - the worker Compose/runtime definition;
-- GitLab CI deployment steps;
+- the GitHub Actions release and operations workflows;
 - Render web configuration;
 - operational documentation.
 
@@ -127,13 +127,14 @@ Repository evidence supports these checks:
 - frontend typecheck, tests, and build through commands in `client/package.json`;
 - backend health and route inspection through the Laravel container;
 - backend feature tests through the dedicated Docker test lane;
-- worker verification through the GitLab pipeline and backend operational command tests.
+- backend image smoke test and live verification through `backend-ci.yml`;
+- worker verification through backend operational command tests (the deploy-time check returns with #709).
 
 Provider-level verification remains an operational action. A documentation review cannot confirm:
 
 - the latest workflow or pipeline succeeded;
 - the Render service is serving the expected image;
-- the GCP worker is running the expected revision;
+- a worker is running the expected revision;
 - Upstash connectivity or queue depth is healthy;
 - rollback credentials and provider retention settings are valid.
 
@@ -149,7 +150,8 @@ Provider-level verification remains an operational action. A documentation revie
 
 - `AGENTS.md`
 - `.github/workflows/frontend-ci.yml`
-- `.gitlab-ci.yml`
+- `.github/workflows/backend-ci.yml`
+- `.github/workflows/backend-operations.yml`
 - `processor-api/docker-compose.yml`
 - `client/docker-compose.yml`
 - `processor-api/tests/Feature/OperationalRoutesTest.php`

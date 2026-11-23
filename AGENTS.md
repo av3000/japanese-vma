@@ -17,10 +17,10 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 ### Current Live Environment
 
 - **Frontend live hosting:** `.github/workflows/frontend-ci.yml` builds the frontend image and triggers the Render deploy; see `docs/architecture/deployment-and-runtime.md` for the whole runtime.
-- **Backend live hosting:** Render hosts the live Laravel API/web service.
-- **Queue / worker runtime:** Production queue workers run on a GCP VM via Docker Compose, not on Render.
+- **Backend live hosting:** Render hosts the live Laravel API/web service, pulling the backend image from GHCR.
+- **Queue / worker runtime:** No production queue worker runs right now: its GCP VM is gone, and the Azure replacement is #709. The worker runs from Docker Compose (`processor-api/.deploy/worker/`), not on Render.
 - **Queue backend:** Upstash Redis is used for live Redis-backed queue/cache coordination.
-- **Backend deployment flow:** GitLab CI builds the backend image, deploys the worker to the GCP VM over SSH, verifies the worker, then triggers the Render backend deploy.
+- **Backend deployment flow:** On a push to `master`, `.github/workflows/backend-ci.yml` builds and smoke-tests the backend image, pushes it to GHCR, runs migrations behind the `production` environment's approval when the release changes them, triggers the Render backend deploy, then verifies the live service. One-off production tasks (migrate, data import, Passport client) run from `.github/workflows/backend-operations.yml`.
 - **Rule for agents:** Treat live environment changes as cross-system work. Check backend config, worker compose/runtime, CI/CD, and docs together before proposing or implementing production changes.
 
 ## 2) Developer Experience (DX) Baseline
@@ -88,7 +88,7 @@ This file provides **repository-wide** guidance for AI agents and contributors w
 
 - Backend rules live in: `processor-api/AGENTS.md`
 - Frontend rules live in: `client/AGENTS.md`
-- Live backend deployment and worker behavior may involve Render, GitLab CI, GCP VM worker runtime, and Upstash Redis together; keep root deployment context in mind when editing backend infrastructure or queue-related code.
+- Live backend deployment and worker behavior may involve Render, GitHub Actions, the worker runtime, and Upstash Redis together; keep root deployment context in mind when editing backend infrastructure or queue-related code.
 
 When touching files under either subtree, treat the scoped AGENTS file there as the primary implementation guide.
 

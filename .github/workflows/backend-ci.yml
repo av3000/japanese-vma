@@ -1,18 +1,32 @@
 name: Backend quality
 
+# What runs when (#708):
+# - pull request: `quality`. `image` too, but only when the PR touches what the production image
+#   is made of (processor-api/.docker, the Composer manifests, this file).
+# - push to develop: `quality`.
+# - push to the default branch (a release): `image` builds the production image once,
+#   smoke-tests it and pushes that same image to GHCR. `migrate` runs when the release changes
+#   migrations, seeders or the permission catalogue, and waits for a reviewer of the `production`
+#   environment. Then `deploy-production` triggers Render and `verify-production` checks the live
+#   service. `quality` is not re-run: the release PR into the default branch ran it.
+#
+# The production queue worker is not deployed from here: its GCP VM is gone, and the Azure
+# worker is #709. The rare manual tasks (migrate on demand, data import, Passport client) live in
+# backend-operations.yml, which `migrate` also calls.
 on:
   push:
-    branches: [develop]
+    branches: [develop, master]
     paths:
       - "processor-api/**"
       - ".github/workflows/backend-ci.yml"
   pull_request:
-    branches: [develop, "feature/**"]
+    branches: [develop, master, "feature/**"]
     paths:
       - "processor-api/**"
       - ".github/workflows/backend-ci.yml"
 
-# A new push to a PR cancels that PR's older run; push runs always finish.
+# A new push to a PR cancels that PR's older run. Push runs are never cancelled, so a release is
+# not stopped between a migration and the deploy that needs it.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -20,9 +34,15 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/japanese-vma-processor-api
+  SMOKE_IMAGE: japanese-vma-processor-api:${{ github.sha }}
+
 jobs:
   quality:
     name: Backend quality
+    if: github.event_name == 'pull_request' || github.ref != format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -127,3 +147,284 @@ jobs:
 
       - name: Run test suite
         run: composer test
+
+  image-changes:
+    name: Detect image changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      image: ${{ steps.files.outputs.image }}
+    steps:
+      # The image's own inputs: the Dockerfile and Apache config, the dependencies
+      # `composer install` resolves inside the image, and this workflow. Application code is
+      # covered by `quality`.
+      - name: Check changed files
+        id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          changed="$(gh api "repos/$REPO/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename')"
+
+          if printf '%s\n' "$changed" | grep -Eq '^(processor-api/\.docker/|processor-api/composer\.(json|lock)$|\.github/workflows/backend-ci\.yml$)'; then
+            echo "image=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No image inputs changed; the production image build is skipped."
+            echo "image=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  image:
+    name: Production image
+    needs: image-changes
+    # `!cancelled()` lets this run on a push, where `image-changes` is skipped.
+    if: >-
+      !cancelled() && (
+        (github.event_name == 'pull_request' && needs.image-changes.outputs.image == 'true') ||
+        (github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IS_RELEASE: ${{ github.event_name == 'push' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # `load: true` puts the image in the local daemon for the smoke test. On a release, that
+      # same image is then tagged and pushed, so the image that passed the smoke test is the one
+      # that ships. Layers are written to the GitHub Actions cache on releases only.
+      - name: Build production image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./processor-api
+          file: ./processor-api/.docker/Dockerfile.ci
+          pull: true
+          push: false
+          load: true
+          tags: ${{ env.SMOKE_IMAGE }}
+          cache-from: type=gha,scope=backend
+          cache-to: ${{ github.event_name == 'push' && 'type=gha,mode=max,scope=backend' || '' }}
+
+      # The worker's Redis queue and cache need phpredis; an image without it boots and serves
+      # HTTP, so only this check catches it.
+      - name: Check PHP extensions
+        run: |
+          if ! docker run --rm "$SMOKE_IMAGE" php -m | grep -qx 'redis'; then
+            echo "Redis PHP extension is missing from the production image."
+            exit 1
+          fi
+
+      # Proves Apache serves Laravel with production settings: the root page renders and
+      # /api/health answers. SQLite stands in for Postgres, as it did in GitLab (audit M8).
+      - name: Smoke test production image
+        run: |
+          smoke_env_file="$(mktemp)"
+          docker rm -f processor-api-smoke >/dev/null 2>&1 || true
+          trap 'rm -f "$smoke_env_file"; docker rm -f processor-api-smoke >/dev/null 2>&1 || true' EXIT
+
+          printf '%s\n' \
+            "APP_ENV=production" \
+            "APP_DEBUG=false" \
+            "APP_RELEASE=$GITHUB_SHA" \
+            "APP_KEY=base64:$(openssl rand -base64 32)" \
+            "APP_URL=http://127.0.0.1:18080" \
+            "LOG_CHANNEL=stderr" \
+            "LOG_LEVEL=warning" \
+            "DB_CONNECTION=sqlite" \
+            "DB_DATABASE=/tmp/database.sqlite" \
+            "CACHE_DRIVER=file" \
+            "SESSION_DRIVER=file" \
+            "SENTRY_ENVIRONMENT=ci" \
+            "SENTRY_RELEASE=$GITHUB_SHA" \
+            "QUEUE_CONNECTION=sync" \
+            > "$smoke_env_file"
+
+          docker run -d --name processor-api-smoke -p 18080:80 \
+            --env-file "$smoke_env_file" \
+            "$SMOKE_IMAGE" \
+            sh -lc "touch /tmp/database.sqlite && exec apache2-foreground"
+
+          for attempt in $(seq 1 30); do
+            root_status="$(curl -s -o smoke-root.html -w "%{http_code}" http://127.0.0.1:18080/ || true)"
+
+            if [ "$root_status" = "200" ] && grep -q 'id="root"' smoke-root.html; then
+              break
+            fi
+
+            if [ "$attempt" -eq 30 ]; then
+              docker logs processor-api-smoke || true
+              [ -f smoke-root.html ] && cat smoke-root.html
+              exit 1
+            fi
+
+            sleep 2
+          done
+
+          health_status="$(curl -s -o smoke-health.json -w "%{http_code}" http://127.0.0.1:18080/api/health || true)"
+
+          if [ "$health_status" != "200" ] || ! grep -q '"ok":true' smoke-health.json; then
+            docker logs processor-api-smoke || true
+            [ -f smoke-health.json ] && cat smoke-health.json
+            exit 1
+          fi
+
+      - name: Log in to GHCR
+        if: env.IS_RELEASE == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push backend image
+        if: env.IS_RELEASE == 'true'
+        run: |
+          for tag in "sha-$GITHUB_SHA" latest; do
+            docker tag "$SMOKE_IMAGE" "$REGISTRY/$IMAGE_NAME:$tag"
+            docker push "$REGISTRY/$IMAGE_NAME:$tag"
+          done
+
+  release-plan:
+    name: Plan release
+    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    outputs:
+      migrations: ${{ steps.migrations.outputs.migrations }}
+    steps:
+      # Full history: a release merges develop into the default branch, so the diff can span
+      # far more files than the compare API lists.
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check for migration changes
+        id: migrations
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [ -z "$BEFORE_SHA" ] || ! git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            echo "No usable previous commit; treating the release as changing migrations."
+            echo "migrations=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed="$(git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA" -- \
+            'processor-api/database/migrations' \
+            'processor-api/database/seeders' \
+            'processor-api/config/permission-catalog.php')"
+
+          if [ -n "$changed" ]; then
+            printf 'Migration inputs changed:\n%s\n' "$changed"
+            echo "migrations=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No migration inputs changed; the deploy does not wait for a migration."
+            echo "migrations=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Runs the image that was just pushed against production, in the `production` environment, so
+  # it waits for that environment's required reviewer. The deploy waits for it.
+  migrate:
+    name: Migrate production database
+    needs: [image, release-plan]
+    # Every job after `image` spells out its status checks and starts with `!cancelled()`. On a
+    # push `image-changes` is skipped, and a plain `if:` implies `success()`, which also looks at
+    # skipped ancestors and would skip the whole release chain.
+    if: >-
+      !cancelled() &&
+      needs.image.result == 'success' &&
+      needs.release-plan.result == 'success' &&
+      needs.release-plan.outputs.migrations == 'true'
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/backend-operations.yml
+    with:
+      task: migrate
+      image_tag: sha-${{ github.sha }}
+    secrets: inherit
+
+  deploy-production:
+    name: Deploy production backend
+    needs: [image, release-plan, migrate]
+    # Deploys only after a published image and, when the release has one, a finished migration.
+    # A failed or rejected migration stops the deploy.
+    if: >-
+      !cancelled() &&
+      github.event_name == 'push' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      needs.image.result == 'success' &&
+      needs.release-plan.result == 'success' &&
+      (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      # Read from `secrets` and passed through `env:`, so the hook is masked in run logs
+      # (audit finding H1). Render deploys the service's configured image, `:latest` (audit M4).
+      - name: Trigger Render deploy
+        env:
+          RENDER_BACKEND_DEPLOY_HOOK_URL: ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_BACKEND_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_BACKEND_DEPLOY_HOOK_URL secret is required."
+            exit 1
+          fi
+
+          curl --fail --silent --show-error -X POST "$RENDER_BACKEND_DEPLOY_HOOK_URL"
+
+  # The hook only queues the deploy. Health keeps answering from the old instance until Render
+  # switches over, so this proves the service is up and serving data, not which revision it runs.
+  verify-production:
+    name: Verify production backend
+    needs: deploy-production
+    if: ${{ !cancelled() && needs.deploy-production.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      BACKEND_BASE_URL: ${{ vars.BACKEND_BASE_URL }}
+    steps:
+      - name: Wait for the service to answer
+        run: |
+          if [ -z "$BACKEND_BASE_URL" ]; then
+            echo "BACKEND_BASE_URL repository variable is required."
+            exit 1
+          fi
+
+          sleep 20
+
+          for attempt in $(seq 1 60); do
+            status_code="$(curl -s -o verify-health.json -w "%{http_code}" --max-time 30 "$BACKEND_BASE_URL/api/health" || true)"
+
+            if [ "$status_code" = "200" ] && grep -q '"ok":true' verify-health.json; then
+              break
+            fi
+
+            if [ "$attempt" -eq 60 ]; then
+              [ -f verify-health.json ] && cat verify-health.json
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+      - name: Check root page and catalogue data
+        run: |
+          root_status="$(curl -s -o verify-root.html -w "%{http_code}" --max-time 30 "$BACKEND_BASE_URL/" || true)"
+
+          if [ "$root_status" != "200" ] || ! grep -q 'id="root"' verify-root.html; then
+            [ -f verify-root.html ] && cat verify-root.html
+            exit 1
+          fi
+
+          kanjis_status="$(curl -s -o verify-kanjis.json -w "%{http_code}" --max-time 30 "$BACKEND_BASE_URL/api/v1/kanjis?per_page=1" || true)"
+
+          if [ "$kanjis_status" != "200" ] || ! grep -q '"success":true' verify-kanjis.json; then
+            [ -f verify-kanjis.json ] && cat verify-kanjis.json
+            exit 1
+          fi

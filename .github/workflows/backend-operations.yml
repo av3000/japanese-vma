@@ -1,0 +1,177 @@
+name: Backend operations
+
+# One-off tasks against the production database (#708), replacing GitLab's manual jobs:
+# - migrate: migrations plus the seeders every release needs. backend-ci.yml calls this on a
+#   release that changes migrations; start it by hand to re-run them (GitLab's
+#   FORCE_SHOW_MIGRATE_JOB).
+# - import-japanese-data: builds Dockerfile.import from the chosen ref and runs the import
+#   (GitLab's SHOW_IMPORT_JAPANESE_DATA_JOB). Built on demand, not on every release.
+# - setup-passport-client: creates the Passport personal access client (GitLab's
+#   SHOW_SETUP_PASSPORT_JOB).
+#
+# The job runs in the `production` environment. Its required reviewers are the manual gate, and
+# its secrets are the production connection values.
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Task to run against production
+        required: true
+        type: choice
+        options:
+          - migrate
+          - import-japanese-data
+          - setup-passport-client
+      image_tag:
+        description: Backend image tag for migrate and setup-passport-client (latest or sha-<commit>)
+        required: true
+        default: latest
+        type: string
+      allow_rerun:
+        description: import-japanese-data only, pass --allow-rerun
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      task:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+      allow_rerun:
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  run:
+    name: ${{ inputs.task }}
+    runs-on: ubuntu-latest
+    environment: production
+    # Two tasks never write to the production database at the same time; a second one queues.
+    concurrency:
+      group: backend-production-database
+      cancel-in-progress: false
+    env:
+      TASK: ${{ inputs.task }}
+      IMAGE: ghcr.io/${{ github.repository_owner }}/japanese-vma-processor-api:${{ inputs.image_tag }}
+      IMPORT_IMAGE: japanese-vma-processor-api-import:${{ github.sha }}
+    steps:
+      - name: Check task
+        run: |
+          case "$TASK" in
+            migrate|import-japanese-data|setup-passport-client) ;;
+            *) echo "Unknown task: $TASK"; exit 1 ;;
+          esac
+
+      # Values come from the `production` environment's secrets and variables and are passed
+      # through `env:`, so they are masked in run logs. The file is deleted when the job ends.
+      - name: Write runtime env file
+        env:
+          APP_KEY: ${{ secrets.APP_KEY }}
+          APP_URL: ${{ vars.BACKEND_BASE_URL }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_SSLMODE: ${{ vars.DB_SSLMODE || 'require' }}
+          PASSPORT_PRIVATE_KEY_B64: ${{ secrets.PASSPORT_PRIVATE_KEY_B64 }}
+          PASSPORT_PUBLIC_KEY_B64: ${{ secrets.PASSPORT_PUBLIC_KEY_B64 }}
+          PASSPORT_PERSONAL_ACCESS_CLIENT_ID: ${{ secrets.PASSPORT_PERSONAL_ACCESS_CLIENT_ID }}
+          PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET: ${{ secrets.PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET }}
+          SENTRY_LARAVEL_DSN: ${{ secrets.SENTRY_LARAVEL_DSN }}
+        run: |
+          for required in APP_KEY DB_HOST DB_DATABASE DB_USERNAME DB_PASSWORD; do
+            eval "value=\${$required:-}"
+            [ -n "$value" ] || { echo "$required secret is required in the production environment."; exit 1; }
+          done
+
+          printf '%s\n' \
+            "APP_NAME=JapaneseVMA" \
+            "APP_ENV=production" \
+            "APP_DEBUG=false" \
+            "APP_RELEASE=$GITHUB_SHA" \
+            "APP_KEY=$APP_KEY" \
+            "APP_URL=$APP_URL" \
+            "LOG_CHANNEL=stderr" \
+            "LOG_LEVEL=warning" \
+            "DB_CONNECTION=pgsql" \
+            "DB_HOST=$DB_HOST" \
+            "DB_PORT=${DB_PORT:-5432}" \
+            "DB_DATABASE=$DB_DATABASE" \
+            "DB_USERNAME=$DB_USERNAME" \
+            "DB_PASSWORD=$DB_PASSWORD" \
+            "DB_SSLMODE=$DB_SSLMODE" \
+            "CACHE_DRIVER=file" \
+            "SESSION_DRIVER=file" \
+            "PASSPORT_PRIVATE_KEY_B64=$PASSPORT_PRIVATE_KEY_B64" \
+            "PASSPORT_PUBLIC_KEY_B64=$PASSPORT_PUBLIC_KEY_B64" \
+            "PASSPORT_PERSONAL_ACCESS_CLIENT_ID=$PASSPORT_PERSONAL_ACCESS_CLIENT_ID" \
+            "PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET=$PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET" \
+            "SENTRY_LARAVEL_DSN=$SENTRY_LARAVEL_DSN" \
+            "SENTRY_ENVIRONMENT=production" \
+            "SENTRY_RELEASE=$GITHUB_SHA" \
+            "QUEUE_CONNECTION=sync" \
+            > "$RUNNER_TEMP/runtime.env"
+
+      - name: Log in to GHCR
+        if: inputs.task != 'import-japanese-data'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Migrate and seed
+        if: inputs.task == 'migrate'
+        run: |
+          docker pull "$IMAGE"
+          docker run --rm --env-file "$RUNNER_TEMP/runtime.env" "$IMAGE" sh -lc '
+            php artisan migrate --force &&
+            php artisan db:seed --class=ObjectTemplatesTableSeeder --force &&
+            php artisan db:seed --class=PermissionSeeder --force &&
+            php artisan db:seed --class=RoleSeeder --force
+          '
+
+      - name: Create Passport personal access client
+        if: inputs.task == 'setup-passport-client'
+        run: |
+          docker pull "$IMAGE"
+          docker run --rm --env-file "$RUNNER_TEMP/runtime.env" "$IMAGE" \
+            php artisan passport:client --personal --name="Render Personal Access Client" --no-interaction
+
+      - name: Checkout repository
+        if: inputs.task == 'import-japanese-data'
+        uses: actions/checkout@v6
+
+      # The import image is built from the repository root of the chosen ref and never pushed.
+      - name: Build import image
+        if: inputs.task == 'import-japanese-data'
+        run: docker build --pull -f processor-api/.docker/Dockerfile.import -t "$IMPORT_IMAGE" .
+
+      - name: Import Japanese data
+        if: inputs.task == 'import-japanese-data'
+        env:
+          ALLOW_RERUN: ${{ inputs.allow_rerun }}
+        run: |
+          if [ "$ALLOW_RERUN" = "true" ]; then
+            docker run --rm --env-file "$RUNNER_TEMP/runtime.env" "$IMPORT_IMAGE" \
+              php artisan app:import-japanese-data --environment=production --allow-rerun
+          else
+            docker run --rm --env-file "$RUNNER_TEMP/runtime.env" "$IMPORT_IMAGE" \
+              php artisan app:import-japanese-data --environment=production
+          fi
+
+      - name: Remove runtime env file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/runtime.env"

@@ -27,7 +27,7 @@ use UnitEnum;
 
 /**
  * Is the dictionary data here fresh and complete? Read-only: an import truncates tables and is
- * run deliberately from the GitLab pipeline, never from the panel.
+ * run deliberately from the `Backend operations` GitHub workflow, never from the panel.
  */
 class ImportStatus extends Page
 {
