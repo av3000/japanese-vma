@@ -66,7 +66,6 @@ function New-ValidFixture {
     Set-Content -LiteralPath (Join-Path $repositoryRoot 'AGENTS.md') -Value '# Fixture rules' -Encoding utf8NoBOM
     Set-Content -LiteralPath (Join-Path $repositoryRoot 'CONTEXT.md') -Value '# Fixture context' -Encoding utf8NoBOM
     Set-Content -LiteralPath (Join-Path $repositoryRoot 'README.md') -Value '# Fixture readme' -Encoding utf8NoBOM
-    Set-Content -LiteralPath (Join-Path $repositoryRoot '.gitlab-ci.yml') -Value 'stages: []' -Encoding utf8NoBOM
     Set-Content -LiteralPath (Join-Path $repositoryRoot 'client/src/existing.ts') -Value 'export {}' -Encoding utf8NoBOM
 
     foreach ($relativePath in $requiredAiFiles) {

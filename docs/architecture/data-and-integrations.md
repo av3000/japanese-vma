@@ -64,13 +64,13 @@ This polymorphic boundary requires careful validation: numeric IDs, UUIDs, and o
 
 | Integration | Repository evidence | Verification state |
 |---|---|---|
-| GitHub Actions | `.github/workflows/frontend-ci.yml` | Configuration verified |
-| GitLab CI | `.gitlab-ci.yml` | Configuration verified |
+| GitHub Actions | `.github/workflows/frontend-ci.yml`, `backend-ci.yml`, `backend-operations.yml` | Configuration verified |
+| GHCR | Image names in the workflows | Configuration verified; package visibility open |
 | Render | Pipeline and repository guidance | Configuration verified; provider state open |
-| GCP worker VM | Pipeline and repository guidance | Configuration verified; VM state open |
+| Worker host | `processor-api/.deploy/worker/` | No production host deployed yet (#709) |
 | Upstash Redis | Repository guidance and environment/config references | Intended production dependency; live connection open |
 | Sentry | Frontend provider/dependency references | Client integration present; project ingestion open |
-| Laravel Reverb | `processor-api/routes/channels.php`, `App\Application\Processing\Events\ProcessingStatusUpdated`, `client/src/lib/echo/`, `.gitlab-ci.yml` (`verify_reverb`) | Application and pipeline wiring verified; Render service and `REVERB_*` variables not yet provisioned (#262), so live channel health remains open |
+| Laravel Reverb | `processor-api/routes/channels.php`, `App\Application\Processing\Events\ProcessingStatusUpdated`, `client/src/lib/echo/` | Application wiring verified; the pipeline's Reverb check returns with #709; Render service and `REVERB_*` variables not yet provisioned (#262), so live channel health remains open |
 
 ## Integrity Rules
 

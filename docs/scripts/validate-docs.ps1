@@ -40,7 +40,7 @@ $featureFiles = @(
 
 $metadataFields = @('Status', 'Last reviewed', 'Evidence baseline', 'Audience')
 $knownRepositoryPrefixes = @('client/', 'processor-api/', 'docs/', '.github/', '.codex/', '.ai/')
-$knownRootFiles = @('AGENTS.md', 'CONTEXT.md', 'README.md', '.gitlab-ci.yml')
+$knownRootFiles = @('AGENTS.md', 'CONTEXT.md', 'README.md')
 $errors = [System.Collections.Generic.List[string]]::new()
 
 function Add-ValidationError {

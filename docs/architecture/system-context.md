@@ -21,13 +21,13 @@ flowchart LR
     api[Laravel API\nlegacy and v1 routes]
     postgres[(PostgreSQL)]
     redis[(Redis\nlocal or Upstash)]
-    worker[Queue worker\nGCP VM in production config]
+    worker[Queue worker\nnot running in production, #709]
     realtime[Realtime channel\nLaravel Reverb client integration]
     pdf[PDF renderer]
     datasets[Japanese reference datasets\nJMdict, KANJIDIC, JMnedict, Radkfile]
 
-    gha[GitHub Actions\nfrontend verification and deploy]
-    gitlab[GitLab CI\nbackend image and deployment orchestration]
+    gha[GitHub Actions\nverification, images and deploys]
+    ghcr[GHCR\ncontainer images]
     render[Render\nbackend web runtime]
 
     learner --> client
@@ -43,8 +43,9 @@ flowchart LR
     worker --> postgres
     datasets --> postgres
     gha --> client
-    gitlab --> worker
-    gitlab --> render
+    gha --> ghcr
+    gha --> render
+    render --> ghcr
 ```
 
 ## People and Concerns
@@ -70,7 +71,7 @@ flowchart LR
 ### Verified configuration; live state not inspected
 
 - `.github/workflows/frontend-ci.yml` defines frontend verification and deployment.
-- `.gitlab-ci.yml` defines backend image creation, GCP worker deployment/verification, and a Render deployment trigger.
+- `.github/workflows/backend-ci.yml` defines backend image creation, the gated release migration, the Render deployment trigger and live verification; `.github/workflows/backend-operations.yml` defines the manual production tasks.
 - Production guidance identifies Upstash Redis as the shared queue/cache backend.
 
 ### Inferred trust boundaries
