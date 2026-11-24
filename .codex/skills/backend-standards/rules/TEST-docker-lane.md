@@ -28,7 +28,7 @@ docker compose -f docker-compose.test.yml -p jvma502 stop    # while the PR is o
 docker compose -f docker-compose.test.yml -p jvma502 down    # once the branch has merged
 ```
 
-`composer test` turns off Composer's 300-second process timeout, so a slow targeted run is not cut off; stop one that hangs with Ctrl-C.
+`composer test` turns off Composer's 300-second process timeout, so a slow targeted run is not cut off. A run that hangs is stopped with Ctrl-C in an interactive terminal, or from an agent session (`exec -T` has no TTY) with `docker compose -f docker-compose.test.yml -p jvma502 restart test-runner`.
 
 A fresh lane has no Passport keypair, so without `passport:keys --force` every `auth:api` test returns 500 with `Invalid key supplied`. That and the other lane traps (process limits, imported data wiped by `RefreshDatabase`) are in `docs/agents/local-environment.md`.
 
