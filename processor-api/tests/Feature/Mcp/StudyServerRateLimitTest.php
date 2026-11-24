@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -103,6 +104,27 @@ final class StudyServerRateLimitTest extends TestCase
             ->assertJsonPath('result.structuredContent.total', 1)
             ->assertJsonPath('result.structuredContent.results.0.word', '学校');
         $this->assertSame('29', $response->headers->get('X-RateLimit-Remaining'));
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function unusableRates(): array
+    {
+        return [
+            'zero' => ['0'],
+            'negative' => ['-5'],
+            'text' => ['often'],
+            'empty' => [''],
+        ];
+    }
+
+    #[DataProvider('unusableRates')]
+    public function test_a_rate_that_is_not_a_positive_number_falls_back_to_30(string $value): void
+    {
+        $this->setRateVariable($value);
+
+        $this->assertSame(30, $this->loadConfig()['rate_per_minute']);
     }
 
     public function test_the_study_route_carries_the_mcp_throttle(): void

@@ -236,7 +236,7 @@ The backend runs a read-only [MCP](https://modelcontextprotocol.io) server for A
 | Variable | Default | Effect |
 |---|---|---|
 | `STUDY_MCP_ENABLED` | on unless `APP_ENV=production` | Registers the route. Unset in production, `/mcp/study` answers 404. |
-| `STUDY_MCP_RATE_PER_MINUTE` | `30` | Requests per minute from one IP address. Over the limit the server answers 429 with a `Retry-After` header. |
+| `STUDY_MCP_RATE_PER_MINUTE` | `30` | Requests per minute from one IP address. Over the limit the server answers 429 with a `Retry-After` header. A value that is not a whole number of at least 1 falls back to 30. |
 
 The limit is per IP address, not per session or per user. Clients on one address share one bucket, and hosted assistants such as claude.ai or ChatGPT call from their vendor's servers, so every user of such a connector shares a single bucket. Locally run clients each have their own.
 
