@@ -59,6 +59,26 @@ final class StudyServerRouteTest extends TestCase
         }
     }
 
+    public function test_the_instructions_a_client_reads_at_initialize_name_every_tool_and_both_chains(): void
+    {
+        $instructions = $this->rpc('initialize', [
+            'protocolVersion' => '2025-06-18',
+            'capabilities' => (object) [],
+            'clientInfo' => ['name' => 'phpunit', 'version' => '1'],
+        ])->assertOk()->json('result.instructions');
+
+        $tools = $this->rpc('tools/list')->assertOk()->json('result.tools');
+
+        foreach (array_column($tools, 'name') as $name) {
+            $this->assertStringContainsString($name, $instructions, "The instructions must name {$name}");
+        }
+
+        $this->assertStringContainsString('find_articles → read_article', $instructions);
+        $this->assertStringContainsString('find_decks → get_flashcards', $instructions);
+        $this->assertStringContainsString('levels may be missing', $instructions);
+        $this->assertStringNotContainsString('more tools to come', $instructions);
+    }
+
     public function test_the_route_is_not_registered_when_the_setting_is_off(): void
     {
         $this->setStudyMcpEnabled('false');
