@@ -450,6 +450,9 @@ jobs:
             sleep 5
           done
 
+      # Fails unless the home page renders the React app, and the kanji list answers 200 with at
+      # least one kanji in `items`. The kanji check proves the API reaches the database and that
+      # the dictionary data is there.
       - name: Check root page and catalogue data
         run: |
           root_status="$(curl -s -o verify-root.html -w "%{http_code}" --max-time 30 "$BACKEND_BASE_URL/" || true)"
@@ -461,7 +464,7 @@ jobs:
 
           kanjis_status="$(curl -s -o verify-kanjis.json -w "%{http_code}" --max-time 30 "$BACKEND_BASE_URL/api/v1/kanjis?per_page=1" || true)"
 
-          if [ "$kanjis_status" != "200" ] || ! grep -q '"success":true' verify-kanjis.json; then
+          if [ "$kanjis_status" != "200" ] || ! jq -e '(.items | type) == "array" and (.items | length) > 0' verify-kanjis.json >/dev/null 2>&1; then
             [ -f verify-kanjis.json ] && cat verify-kanjis.json
             exit 1
           fi
