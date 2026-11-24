@@ -40,6 +40,19 @@ interface ArticleServiceInterface
     public function getArticle(EntityId $articleUid, ArticleIncludeOptionsDTO $dto, Viewer $viewer, ?AuthenticatedUser $authenticatedUser = null): Result;
 
     /**
+     * Read one article as a guest, recording no view and loading no engagement, hashtags or processing state.
+     *
+     * The visibility rule is the one getArticle applies to a guest. A private article, an article
+     * that is not PROCESSED or APPROVED and a missing article all fail with the same not-found
+     * error, so the caller cannot tell a hidden article from one that does not exist.
+     *
+     * @param EntityId $articleUid Article's public UUID
+     *
+     * @return Result Success data: Article (domain), Failure data: ResultError (notFound)
+     */
+    public function findPublicArticle(EntityId $articleUid): Result;
+
+    /**
      * Update article with optional hashtag and content reprocessing.
      *
      * @param string $uid Article public UUID
