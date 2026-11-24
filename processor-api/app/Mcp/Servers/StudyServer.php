@@ -8,6 +8,7 @@ use App\Mcp\Tools\FindArticlesTool;
 use App\Mcp\Tools\FindDecksTool;
 use App\Mcp\Tools\LookupKanjiTool;
 use App\Mcp\Tools\LookupWordTool;
+use App\Mcp\Tools\ReadArticleTool;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -28,6 +29,7 @@ class StudyServer extends Server
         LookupWordTool::class,
         LookupKanjiTool::class,
         FindArticlesTool::class,
+        ReadArticleTool::class,
         FindDecksTool::class,
     ];
 }

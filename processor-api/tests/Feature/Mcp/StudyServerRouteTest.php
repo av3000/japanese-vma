@@ -48,6 +48,7 @@ final class StudyServerRouteTest extends TestCase
         $this->assertContains('lookup_word', array_column($tools, 'name'));
         $this->assertContains('lookup_kanji', array_column($tools, 'name'));
         $this->assertContains('find_articles', array_column($tools, 'name'));
+        $this->assertContains('read_article', array_column($tools, 'name'));
         $this->assertContains('find_decks', array_column($tools, 'name'));
 
         foreach ($tools as $tool) {

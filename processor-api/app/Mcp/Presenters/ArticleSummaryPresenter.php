@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Presenters;
 
 use App\Domain\Articles\DTOs\ArticleListItemDTO;
+use App\Mcp\Support\ArticleLevelMix;
 use App\Mcp\Support\ArticleMainLevel;
 
 /**
@@ -37,14 +38,7 @@ final class ArticleSummaryPresenter
             'title_en' => $article->getTitleEn()?->value,
             'preview_jp' => $article->getContentJp()->excerpt(),
             'main_level' => ArticleMainLevel::fromCounts($counts)?->value,
-            'level_mix' => [
-                'N5' => $counts->n5,
-                'N4' => $counts->n4,
-                'N3' => $counts->n3,
-                'N2' => $counts->n2,
-                'N1' => $counts->n1,
-                'uncommon' => $counts->uncommon,
-            ],
+            'level_mix' => ArticleLevelMix::fromCounts($counts),
             'tags' => array_values(array_map(
                 static fn (array|object $hashtag): string => (string) data_get($hashtag, 'content'),
                 $item->hashtags,
