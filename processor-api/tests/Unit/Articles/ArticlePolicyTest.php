@@ -7,17 +7,46 @@ namespace Tests\Unit\Articles;
 use App\Application\Articles\Policies\ArticlePolicy;
 use App\Application\Auth\DTOs\AuthenticatedUser;
 use App\Domain\Articles\Models\Article;
+use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
 use App\Domain\Shared\ValueObjects\EntityId;
 use App\Domain\Shared\ValueObjects\UserId;
 use App\Domain\Shared\ValueObjects\UserName;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class ArticlePolicyTest extends TestCase
 {
-    public function test_public_articles_are_visible_to_anonymous_viewers(): void
+    public function test_processed_and_approved_public_articles_are_visible_to_anonymous_viewers(): void
     {
-        self::assertTrue((new ArticlePolicy)->canView(null, $this->article(PublicityStatus::PUBLIC, 10)));
+        $policy = new ArticlePolicy;
+
+        self::assertTrue($policy->canView(null, $this->article(PublicityStatus::PUBLIC, 10, ArticleStatus::PROCESSED)));
+        self::assertTrue($policy->canView(null, $this->article(PublicityStatus::PUBLIC, 10, ArticleStatus::APPROVED)));
+    }
+
+    #[DataProvider('unmoderatedStatuses')]
+    public function test_unmoderated_public_articles_are_hidden_from_everyone_but_the_author_and_admins(ArticleStatus $status): void
+    {
+        $policy = new ArticlePolicy;
+        $article = $this->article(PublicityStatus::PUBLIC, 10, $status);
+
+        self::assertFalse($policy->canView(null, $article));
+        self::assertFalse($policy->canView($this->authenticatedUser(20), $article));
+        self::assertTrue($policy->canView($this->authenticatedUser(10), $article));
+        self::assertTrue($policy->canView($this->authenticatedUser(20, true), $article));
+    }
+
+    /**
+     * @return array<string, array{ArticleStatus}>
+     */
+    public static function unmoderatedStatuses(): array
+    {
+        return [
+            'pending' => [ArticleStatus::PENDING],
+            'reviewing' => [ArticleStatus::REVIEWING],
+            'rejected' => [ArticleStatus::REJECTED],
+        ];
     }
 
     public function test_private_articles_are_visible_to_the_owner_and_admin_only(): void
@@ -52,10 +81,11 @@ final class ArticlePolicyTest extends TestCase
         );
     }
 
-    private function article(PublicityStatus $publicity, int $authorId): Article
+    private function article(PublicityStatus $publicity, int $authorId, ArticleStatus $status = ArticleStatus::APPROVED): Article
     {
         $article = $this->createMock(Article::class);
         $article->method('getPublicity')->willReturn($publicity);
+        $article->method('getStatus')->willReturn($status);
         $article->method('getAuthorId')->willReturn(UserId::from($authorId));
 
         return $article;

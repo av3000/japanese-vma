@@ -4,6 +4,7 @@ namespace Tests\Feature\Articles;
 
 use App\Domain\Shared\Enums\ArticleStatus;
 use App\Domain\Shared\Enums\PublicityStatus;
+use App\Domain\Shared\Enums\UserRole;
 use App\Infrastructure\Persistence\Models\Article as PersistenceArticle;
 use App\Infrastructure\Persistence\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -37,6 +38,14 @@ class IndexArticleStatusFilterTest extends TestCase
             ]);
     }
 
+    private function actAsAdmin(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(UserRole::ADMIN->value);
+
+        Passport::actingAs($admin, ['*'], 'api');
+    }
+
     /**
      * @param array<int, array<string, mixed>> $items
      * @param array<int, string> $expected
@@ -53,6 +62,7 @@ class IndexArticleStatusFilterTest extends TestCase
     public function test_a_single_status_returns_only_matching_articles(): void
     {
         $author = User::factory()->create();
+        $this->actAsAdmin();
 
         foreach (ArticleStatus::cases() as $status) {
             $this->createArticle($author, 'Status '.$status->value, $status);
@@ -68,6 +78,7 @@ class IndexArticleStatusFilterTest extends TestCase
     public function test_several_statuses_are_or_within_the_dimension(): void
     {
         $author = User::factory()->create();
+        $this->actAsAdmin();
 
         foreach (ArticleStatus::cases() as $status) {
             $this->createArticle($author, 'Status '.$status->value, $status);
@@ -82,16 +93,23 @@ class IndexArticleStatusFilterTest extends TestCase
         $this->assertSame(2, $response->json('pagination.total'));
     }
 
-    public function test_the_filter_never_shows_a_guest_someone_elses_private_article(): void
+    public function test_the_filter_never_shows_a_guest_someone_elses_private_or_unmoderated_article(): void
     {
         $author = User::factory()->create();
         $this->createArticle($author, 'Public pending', ArticleStatus::PENDING);
-        $this->createArticle($author, 'Private pending', ArticleStatus::PENDING, PublicityStatus::PRIVATE);
+        $this->createArticle($author, 'Private approved', ArticleStatus::APPROVED, PublicityStatus::PRIVATE);
+        $this->createArticle($author, 'Public approved', ArticleStatus::APPROVED);
 
-        $response = $this->json('GET', '/api/v1/articles', ['statuses' => [ArticleStatus::PENDING->value]]);
+        $pending = $this->json('GET', '/api/v1/articles', ['statuses' => [ArticleStatus::PENDING->value]]);
 
-        $response->assertStatus(200);
-        $this->assertTitles($response->json('items'), ['Public pending']);
+        $pending->assertStatus(200);
+        $this->assertTitles($pending->json('items'), []);
+        $this->assertSame(0, $pending->json('pagination.total'));
+
+        $approved = $this->json('GET', '/api/v1/articles', ['statuses' => [ArticleStatus::APPROVED->value]]);
+
+        $approved->assertStatus(200);
+        $this->assertTitles($approved->json('items'), ['Public approved']);
     }
 
     public function test_the_owner_filters_their_own_private_articles(): void

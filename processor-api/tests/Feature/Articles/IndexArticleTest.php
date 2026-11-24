@@ -44,7 +44,7 @@ class IndexArticleTest extends TestCase
             ->byUser($user)
             ->create(array_merge([
                 'publicity' => PublicityStatus::PUBLIC,
-                'status' => ArticleStatus::PENDING,
+                'status' => ArticleStatus::APPROVED,
             ], $overrides));
     }
 
@@ -192,32 +192,6 @@ class IndexArticleTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['author_uid']);
-    }
-
-    /**
-     * Characterization only. Without a `statuses` filter the Article list does not filter on
-     * moderation status, so every status is visible under the public scope. AFM-01 must not
-     * change this; `statuses` (UI-DASH-01) only narrows, see IndexArticleStatusFilterTest.
-     */
-    public function test_index_returns_every_moderation_status_under_the_public_scope(): void
-    {
-        $author = $this->createUser();
-
-        foreach (ArticleStatus::cases() as $status) {
-            $this->createArticle($author, [
-                'title_jp' => 'Status '.$status->value,
-                'publicity' => PublicityStatus::PUBLIC,
-                'status' => $status,
-            ]);
-        }
-
-        $response = $this->json('GET', '/api/v1/articles');
-
-        $response->assertStatus(200);
-        $this->assertArticleTitles(
-            $response->json('items'),
-            array_map(static fn (ArticleStatus $s): string => 'Status '.$s->value, ArticleStatus::cases()),
-        );
     }
 
     public function test_index_rejects_unknown_query_parameters(): void

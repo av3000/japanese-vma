@@ -71,6 +71,42 @@ class DatabaseArticleListReaderContractTest extends TestCase
         );
     }
 
+    public function test_public_scopes_admit_a_public_article_only_when_it_is_processed_or_approved(): void
+    {
+        $owner = $this->createUser();
+        $stranger = $this->createUser();
+
+        foreach (ArticleStatus::cases() as $status) {
+            $this->createArticle($owner, ['title_jp' => 'Public '.$status->name, 'status' => $status]);
+        }
+
+        $visible = ['Public APPROVED', 'Public PROCESSED'];
+
+        $this->assertTitles($visible, $this->read(scope: ArticleVisibilityScope::publicOnly()));
+        $this->assertTitles($visible, $this->read(scope: ArticleVisibilityScope::publicOrOwnedBy($stranger->id)));
+        $this->assertSame(2, $this->countFor(ArticleVisibilityScope::publicOnly()));
+        $this->assertSame(2, $this->countFor(ArticleVisibilityScope::publicOrOwnedBy($stranger->id)));
+    }
+
+    public function test_public_or_owned_scope_keeps_the_owners_articles_in_every_status_and_publicity(): void
+    {
+        $owner = $this->createUser();
+
+        foreach (ArticleStatus::cases() as $status) {
+            $this->createArticle($owner, ['title_jp' => 'Public '.$status->name, 'status' => $status]);
+            $this->createArticle($owner, [
+                'title_jp' => 'Private '.$status->name,
+                'status' => $status,
+                'publicity' => PublicityStatus::PRIVATE,
+            ]);
+        }
+
+        $scope = ArticleVisibilityScope::publicOrOwnedBy($owner->id);
+
+        $this->assertCount(10, $this->read(scope: $scope)->articles);
+        $this->assertSame(10, $this->countFor($scope));
+    }
+
     public function test_unrestricted_scope_admits_everything(): void
     {
         $a = $this->createUser();
@@ -354,6 +390,17 @@ class DatabaseArticleListReaderContractTest extends TestCase
         );
     }
 
+    private function countFor(ArticleVisibilityScope $scope): int
+    {
+        return $this->reader->count(
+            new ArticleQueryCriteria(
+                sort: ArticleSortCriteria::fromSigned('created_at'),
+                pagination: Pagination::default(),
+            ),
+            $scope,
+        );
+    }
+
     private function assertTitles(array $expected, $result): void
     {
         $actual = $this->titles($result);
@@ -382,7 +429,7 @@ class DatabaseArticleListReaderContractTest extends TestCase
             ->byUser($user)
             ->create(array_merge([
                 'publicity' => PublicityStatus::PUBLIC,
-                'status' => ArticleStatus::PENDING,
+                'status' => ArticleStatus::APPROVED,
             ], $overrides));
     }
 

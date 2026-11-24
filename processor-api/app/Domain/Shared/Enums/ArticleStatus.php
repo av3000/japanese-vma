@@ -29,6 +29,31 @@ enum ArticleStatus: int
         return array_map(static fn (self $status): int => $status->value, self::awaitingReview());
     }
 
+    /**
+     * Statuses a public article may have for anyone but its author and the admins to see it, on
+     * the website and through the study server alike. Every list scope and view check reads this
+     * one list.
+     *
+     * @return list<self>
+     */
+    public static function publiclyVisible(): array
+    {
+        return [self::PROCESSED, self::APPROVED];
+    }
+
+    /**
+     * @return list<int>
+     */
+    public static function publiclyVisibleValues(): array
+    {
+        return array_map(static fn (self $status): int => $status->value, self::publiclyVisible());
+    }
+
+    public function isPubliclyVisible(): bool
+    {
+        return in_array($this, self::publiclyVisible(), true);
+    }
+
     public function label(): string
     {
         return match ($this) {
