@@ -64,6 +64,7 @@ The [evidence manifest](./ai/evidence-manifest.md) maps important claims to thei
 Records of decisions that are hard to reverse, surprising without context, and the result of a real trade-off. Numbered sequentially; a decision that is merely an enforceable rule belongs in the owning `AGENTS.md` instead.
 
 - [ADR 0001 — Read enrichment lives beside the entity, not on it](./adr/0001-read-enrichment-lives-beside-the-entity.md)
+- [ADR 0003 — MCP as a second delivery adapter](./adr/0003-mcp-as-a-second-delivery-adapter.md)
 
 ## Feature Packets
 
