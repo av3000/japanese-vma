@@ -30,7 +30,8 @@ final readonly class ArticleVisibilityScope
     }
 
     /**
-     * Guests, and any actor whose identity we could not establish.
+     * Guests, and any actor whose identity we could not establish: public Articles that are
+     * PROCESSED or APPROVED.
      */
     public static function publicOnly(): self
     {
@@ -38,7 +39,8 @@ final readonly class ArticleVisibilityScope
     }
 
     /**
-     * A signed-in non-administrator: every public Article, plus their own private ones.
+     * A signed-in non-administrator: public Articles that are PROCESSED or APPROVED, plus every
+     * Article they authored, in any status and either publicity.
      */
     public static function publicOrOwnedBy(int $ownerId): self
     {
@@ -53,8 +55,7 @@ final readonly class ArticleVisibilityScope
     }
 
     /**
-     * Administrators. Deliberately not called "all" — it is unrestricted with
-     * respect to publicity only, and still carries no moderation-status opinion.
+     * Administrators: no restriction on publicity or on moderation status.
      */
     public static function unrestricted(): self
     {
