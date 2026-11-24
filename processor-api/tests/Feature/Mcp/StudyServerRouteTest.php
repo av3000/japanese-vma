@@ -46,10 +46,11 @@ final class StudyServerRouteTest extends TestCase
         $tools = $this->rpc('tools/list')->assertOk()->json('result.tools');
 
         $this->assertContains('lookup_word', array_column($tools, 'name'));
+        $this->assertContains('lookup_kanji', array_column($tools, 'name'));
         $this->assertContains('find_articles', array_column($tools, 'name'));
 
         foreach ($tools as $tool) {
-            $this->assertTrue($tool['annotations']['readOnlyHint'], "{$tool['name']} must be read-only");
+            $this->assertTrue($tool['annotations']['readOnlyHint'], $tool['name'].' must be read-only');
             $this->assertArrayHasKey('inputSchema', $tool);
             $this->assertArrayHasKey('outputSchema', $tool);
         }
