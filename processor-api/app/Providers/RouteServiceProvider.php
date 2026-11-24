@@ -98,5 +98,10 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('search-counts', function (Request $request) {
             return Limit::perMinute(60)->by($request->user('api')?->id ?: $request->ip());
         });
+
+        // The study MCP server: public and unauthenticated, so one bucket per client address.
+        RateLimiter::for('mcp', function (Request $request) {
+            return Limit::perMinute((int) config('study_mcp.rate_per_minute'))->by($request->ip());
+        });
     }
 }

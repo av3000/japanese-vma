@@ -15,4 +15,17 @@ return [
 
     'enabled' => env('STUDY_MCP_ENABLED', env('APP_ENV', 'production') !== 'production'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Rate limit
+    |--------------------------------------------------------------------------
+    |
+    | Requests per minute that one client IP address may send to `/mcp/study`, through the `mcp`
+    | limiter in RouteServiceProvider. Callers behind one address share one bucket, which includes
+    | hosted assistants that call from their vendor's servers.
+    |
+    */
+
+    'rate_per_minute' => (int) env('STUDY_MCP_RATE_PER_MINUTE', 30),
+
 ];

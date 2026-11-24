@@ -224,6 +224,49 @@ Larastan uses `phpstan-baseline.neon` to ignore the current backlog of existing 
 
 research what do you know about @property-read
 
+## Study MCP server
+
+The backend runs a read-only [MCP](https://modelcontextprotocol.io) server for AI assistants at `/mcp/study`. It needs no login and has six tools: `lookup_word`, `lookup_kanji`, `find_articles`, `read_article`, `find_decks` and `get_flashcards`. Design and rules: [ADR 0003](../docs/adr/0003-mcp-as-a-second-delivery-adapter.md).
+
+| | Address |
+|---|---|
+| Local (Docker Compose, port 8080) | `http://localhost:8080/mcp/study` |
+| Hosted | `https://<your-backend-host>/mcp/study`, once a maintainer has switched it on |
+
+| Variable | Default | Effect |
+|---|---|---|
+| `STUDY_MCP_ENABLED` | on unless `APP_ENV=production` | Registers the route. Unset in production, `/mcp/study` answers 404. |
+| `STUDY_MCP_RATE_PER_MINUTE` | `30` | Requests per minute from one IP address. Over the limit the server answers 429 with a `Retry-After` header. |
+
+The limit is per IP address, not per session or per user. Clients on one address share one bucket, and hosted assistants such as claude.ai or ChatGPT call from their vendor's servers, so every user of such a connector shares a single bucket. Locally run clients each have their own.
+
+Connect a client:
+
+```bash
+# Claude Code
+claude mcp add --transport http jvma-study http://localhost:8080/mcp/study
+```
+
+```json
+{
+  "mcpServers": {
+    "jvma-study": { "type": "http", "url": "http://localhost:8080/mcp/study" }
+  }
+}
+```
+
+The JSON above is for clients that read an `mcpServers` file and speak HTTP (Claude Code's `.mcp.json`, Cursor). Claude Desktop only starts local commands, so bridge it with `mcp-remote`:
+
+```json
+{
+  "mcpServers": {
+    "jvma-study": { "command": "npx", "args": ["mcp-remote", "http://localhost:8080/mcp/study"] }
+  }
+}
+```
+
+To try the tools without an assistant, run the MCP Inspector in the Laravel container: `php artisan mcp:inspector mcp/study`. The articles, kanji and word lists the tools return come from the database; `DatabaseSeeder` seeds only the dictionary, so load a few public articles and lists first.
+
 ## Laravel Boost
 
 Laravel Boost is installed for AI-assisted Laravel development. Run Boost commands inside the Laravel container:
