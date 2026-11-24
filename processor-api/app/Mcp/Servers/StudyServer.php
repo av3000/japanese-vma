@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Servers;
 
 use App\Mcp\Tools\FindArticlesTool;
+use App\Mcp\Tools\FindDecksTool;
 use App\Mcp\Tools\LookupKanjiTool;
 use App\Mcp\Tools\LookupWordTool;
 use App\Mcp\Tools\ReadArticleTool;
@@ -29,5 +30,6 @@ class StudyServer extends Server
         LookupKanjiTool::class,
         FindArticlesTool::class,
         ReadArticleTool::class,
+        FindDecksTool::class,
     ];
 }
