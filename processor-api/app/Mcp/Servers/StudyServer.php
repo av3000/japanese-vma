@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Servers;
 
 use App\Mcp\Tools\FindArticlesTool;
+use App\Mcp\Tools\FindDecksTool;
 use App\Mcp\Tools\LookupKanjiTool;
 use App\Mcp\Tools\LookupWordTool;
 use Laravel\Mcp\Server;
@@ -27,5 +28,6 @@ class StudyServer extends Server
         LookupWordTool::class,
         LookupKanjiTool::class,
         FindArticlesTool::class,
+        FindDecksTool::class,
     ];
 }
