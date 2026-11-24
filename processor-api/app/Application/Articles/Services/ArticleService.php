@@ -175,6 +175,25 @@ class ArticleService implements ArticleServiceInterface
     }
 
     /**
+     * Read one article as a guest: the same canView check as getArticle, and no view is recorded.
+     *
+     * Hidden and missing articles return the same not-found error, so a caller cannot learn that
+     * a private or unmoderated article exists.
+     *
+     * @return Result Success data: DomainArticle, Failure data: ResultError
+     */
+    public function findPublicArticle(EntityId $articleUid): Result
+    {
+        $article = $this->articleRepository->findByPublicUid($articleUid);
+
+        if (! $article || ! $this->articlePolicy->canView(null, $article)) {
+            return Result::failure(ArticleErrors::notFound($articleUid->value()));
+        }
+
+        return Result::success($article);
+    }
+
+    /**
      * Track article view (gracefully handles failures).
      *
      * @param int $id Article ID
