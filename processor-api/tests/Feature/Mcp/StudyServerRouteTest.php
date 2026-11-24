@@ -31,7 +31,7 @@ final class StudyServerRouteTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_the_server_answers_with_exactly_one_read_only_tool_and_needs_no_csrf_token(): void
+    public function test_the_server_lists_only_read_only_tools_and_needs_no_csrf_token(): void
     {
         $this->assertTrue(config('study_mcp.enabled'));
 
@@ -45,11 +45,14 @@ final class StudyServerRouteTest extends TestCase
 
         $tools = $this->rpc('tools/list')->assertOk()->json('result.tools');
 
-        $this->assertCount(1, $tools);
-        $this->assertSame('lookup_word', $tools[0]['name']);
-        $this->assertTrue($tools[0]['annotations']['readOnlyHint']);
-        $this->assertArrayHasKey('inputSchema', $tools[0]);
-        $this->assertArrayHasKey('outputSchema', $tools[0]);
+        $this->assertContains('lookup_word', array_column($tools, 'name'));
+        $this->assertContains('find_articles', array_column($tools, 'name'));
+
+        foreach ($tools as $tool) {
+            $this->assertTrue($tool['annotations']['readOnlyHint'], "{$tool['name']} must be read-only");
+            $this->assertArrayHasKey('inputSchema', $tool);
+            $this->assertArrayHasKey('outputSchema', $tool);
+        }
     }
 
     public function test_the_route_is_not_registered_when_the_setting_is_off(): void
