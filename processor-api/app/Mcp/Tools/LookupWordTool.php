@@ -162,6 +162,12 @@ class LookupWordTool extends Tool
      */
     private function exactHeadword(WordServiceInterface $words, string $query, ?StudyLevel $level): ?Word
     {
+        // PostgreSQL reads a backslash in LIKE as an escape, so the search would not return a word
+        // whose headword contains one, and pinning it would make the page positions wrong.
+        if (str_contains($query, '\\')) {
+            return null;
+        }
+
         $found = $words->findByIdentifier($query);
 
         if ($found->isFailure()) {

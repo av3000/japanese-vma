@@ -18,7 +18,7 @@ MCP is a second delivery adapter next to `app/Http/v1`. A tool in `App\Mcp` vali
 | Data access | Application services directly | HTTP calls to our own v1 API | MCP must respect the same visibility rules itself |
 | Output shape | Dedicated presenters | Reuse v1 JsonResources | A second shape to maintain; v1 resources are sized for the React app, not a model's context |
 | Transport | One web route, used on localhost first | A separate command-line registration | The inspector and clients need the HTTP server running |
-| Access | Public and throttled | OAuth through Passport | No personal data; Passport's consent screen needs a learner web login that does not exist yet |
+| Access | Public; throttled from MCP-07 (#700) | OAuth through Passport | No personal data; Passport's consent screen needs a learner web login that does not exist yet |
 | Rate-limit key | Client IP address | The MCP session id | Hosted connectors (claude.ai, ChatGPT) call from their vendor's servers and share one bucket; a session id is minted by the client's own `initialize` call, so keying on it can be bypassed. Locally run clients are the target; #716 revisits the limit before production |
 | Tool shape | Six task-shaped tools | One tool per endpoint | Hand-written descriptions and schemas |
 | Level filter | Passed through, plus a computed `main_level`: the easiest level whose kanji, with every easier level, cover at least 90% of the article's kanji | Server-side filtering by a derived level; `main_level` as the level with the most kanji, which labels most hard articles N4 | "N4" also returns harder articles; the assistant picks by `main_level` |

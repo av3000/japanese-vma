@@ -91,25 +91,34 @@ final class LookupWordToolTest extends TestCase
         }
         $this->createWord(id: 6, word: '水', furigana: 'みず', meanings: ['water']);
 
-        $seen = [];
-        $pages = [];
+        $expected = [
+            1 => ['水', '水1'],
+            2 => ['水2', '水3'],
+            3 => ['水4', '水5'],
+        ];
 
-        foreach ([1, 2, 3] as $page) {
-            $response = StudyServer::tool(LookupWordTool::class, ['query' => '水', 'limit' => 2, 'page' => $page]);
-            $response->assertOk()->assertStructuredContentPaths([
-                'total' => 6,
-                'has_more' => $page < 3,
-            ]);
-
-            $words = $this->wordsOf($response);
-            $pages[] = $words;
-            $seen = array_merge($seen, $words);
+        foreach ($expected as $page => $words) {
+            StudyServer::tool(LookupWordTool::class, ['query' => '水', 'limit' => 2, 'page' => $page])
+                ->assertOk()
+                ->assertStructuredContentCount(2, 'results')
+                ->assertStructuredContentPaths([
+                    'results.0.word' => $words[0],
+                    'results.1.word' => $words[1],
+                    'total' => 6,
+                    'has_more' => $page < 3,
+                ]);
         }
+    }
 
-        $this->assertSame(['水', '水1'], $pages[0]);
-        $this->assertSame(['水2', '水3'], $pages[1]);
-        $this->assertSame(['水4', '水5'], $pages[2]);
-        $this->assertCount(6, array_unique($seen));
+    public function test_a_query_with_a_backslash_does_not_pin_a_word_the_search_cannot_return(): void
+    {
+        $this->createWord(id: 1, word: 'ab', furigana: 'えい', meanings: ['plain']);
+        $this->createWord(id: 2, word: 'a\\b', furigana: 'えい', meanings: ['odd']);
+
+        StudyServer::tool(LookupWordTool::class, ['query' => 'a\\b'])
+            ->assertOk()
+            ->assertStructuredContentCount(1, 'results')
+            ->assertStructuredContentPaths(['results.0.word' => 'ab', 'total' => 1, 'has_more' => false]);
     }
 
     public function test_a_page_past_the_end_is_empty_and_has_no_more(): void
@@ -147,10 +156,10 @@ final class LookupWordToolTest extends TestCase
         $this->createWord(id: 1, word: '水道', furigana: 'すいどう', jlpt: '3', meanings: ['water supply']);
         $this->createWord(id: 2, word: '水', furigana: 'みず', jlpt: '5', meanings: ['water']);
 
-        $response = StudyServer::tool(LookupWordTool::class, ['query' => '水', 'level' => 'N3']);
-
-        $response->assertOk()->assertStructuredContentPaths(['total' => 1, 'results.0.word' => '水道']);
-        $this->assertSame(['水道'], $this->wordsOf($response));
+        StudyServer::tool(LookupWordTool::class, ['query' => '水', 'level' => 'N3'])
+            ->assertOk()
+            ->assertStructuredContentCount(1, 'results')
+            ->assertStructuredContentPaths(['total' => 1, 'results.0.word' => '水道']);
     }
 
     public function test_a_query_with_no_match_is_an_ok_empty_result(): void
@@ -204,17 +213,6 @@ final class LookupWordToolTest extends TestCase
             ->shouldNotReceive('count');
 
         StudyServer::tool(LookupWordTool::class, $arguments)->assertHasErrors($expectedInMessage);
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function wordsOf(mixed $response): array
-    {
-        $reflection = new \ReflectionMethod($response, 'structuredContent');
-        $structured = $reflection->invoke($response);
-
-        return array_column($structured['results'], 'word');
     }
 
     /**
