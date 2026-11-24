@@ -1,12 +1,12 @@
 # Translation Management Design Specification
 
-Status: Draft ready for review
+Status: Approved; requirements in [requirements.md](./requirements.md), epic [#659](https://github.com/av3000/japanese-vma/issues/659)
 
 Date: 2026-08-18
 
 Scope: Static application labels and short UI text in the React client, managed through the Laravel API and Filament admin panel
 
-Implementation: Not started
+Implementation: Planned (epic #659)
 
 ## Summary
 

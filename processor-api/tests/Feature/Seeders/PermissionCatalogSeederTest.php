@@ -31,7 +31,7 @@ class PermissionCatalogSeederTest extends TestCase
     {
         $groups = PermissionCatalog::groups();
 
-        self::assertSame(['admin', 'content', 'community', 'study', 'operations'], array_keys($groups));
+        self::assertSame(['admin', 'content', 'community', 'study', 'translations', 'operations'], array_keys($groups));
         self::assertSame(
             [
                 'roles.view', 'roles.create', 'roles.update', 'roles.delete',
@@ -49,6 +49,7 @@ class PermissionCatalogSeederTest extends TestCase
         );
         self::assertSame(['posts.view', 'posts.moderate', 'hashtags.manage'], array_keys($groups['community']['permissions']));
         self::assertSame(['study.view', 'sentences.moderate'], array_keys($groups['study']['permissions']));
+        self::assertSame(['translations.view', 'translations.update', 'locales.manage'], array_keys($groups['translations']['permissions']));
         self::assertSame(['operations.view', 'operations.manage'], array_keys($groups['operations']['permissions']));
     }
 

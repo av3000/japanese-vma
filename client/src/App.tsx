@@ -9,6 +9,7 @@ import AppErrorFallback from '@/components/system/AppErrorFallback';
 import ScrollToTop from '@/helpers/ScrollToTop';
 import { AuthProvider } from '@/providers/contexts/auth-provider';
 import { WebSocketProvider } from '@/providers/contexts/socket-provider';
+import { TranslationProvider } from '@/providers/contexts/translation-provider';
 import AppRoutes from '@/routes/routes';
 import { AppearanceProvider } from '@/themes/AppearanceProvider';
 
@@ -38,15 +39,17 @@ const AppContent = () => {
 const App = () => (
 	<AppearanceProvider>
 		<QueryClientProvider client={queryClient}>
-			<Router>
-				<AuthProvider>
-					<WebSocketProvider>
-						<Sentry.ErrorBoundary fallback={AppErrorFallback}>
-							<AppContent />
-						</Sentry.ErrorBoundary>
-					</WebSocketProvider>
-				</AuthProvider>
-			</Router>
+			<TranslationProvider>
+				<Router>
+					<AuthProvider>
+						<WebSocketProvider>
+							<Sentry.ErrorBoundary fallback={AppErrorFallback}>
+								<AppContent />
+							</Sentry.ErrorBoundary>
+						</WebSocketProvider>
+					</AuthProvider>
+				</Router>
+			</TranslationProvider>
 			<ReactQueryDevtools initialIsOpen={false} />
 		</QueryClientProvider>
 	</AppearanceProvider>

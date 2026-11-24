@@ -34,7 +34,8 @@
 
 /* Shown from the collapse breakpoint only (see the bottom of this file). */
 .desktopNav,
-.account {
+.account,
+.language {
 	display: none;
 }
 
@@ -312,6 +313,19 @@
 	border-top: var(--border-size-sm) solid var(--color-border);
 }
 
+.drawerLanguage {
+	margin-bottom: var(--spacing-sm);
+}
+
+.drawerLanguage select {
+	width: 100%;
+}
+
+/* An empty wrapper (no second language) must not add a margin. */
+.drawerLanguage:empty {
+	display: none;
+}
+
 .drawerAccountList {
 	display: flex;
 	align-items: flex-start;
@@ -371,6 +385,15 @@
 	.groups,
 	.account {
 		display: flex;
+	}
+
+	.language {
+		display: flex;
+	}
+
+	/* With English alone the selector renders nothing; an empty item would still cost a flex gap. */
+	.language:empty {
+		display: none;
 	}
 
 	.menuButton {
