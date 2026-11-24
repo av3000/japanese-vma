@@ -370,13 +370,12 @@ jobs:
             exit 1
           fi
 
-          for name in VITE_REVERB_APP_KEY VITE_REVERB_HOST; do
-            eval "value=\$$name"
-            if [ -z "$value" ]; then
-              echo "$name repository variable is required."
-              exit 1
-            fi
-          done
+          # The Reverb settings are optional. Without them the browser never opens a socket and
+          # the UI keeps itself current by polling, so the release goes ahead and the run shows a
+          # warning instead of failing.
+          if [ -z "$VITE_REVERB_APP_KEY" ] || [ -z "$VITE_REVERB_HOST" ]; then
+            echo "::warning title=Reverb not configured::VITE_REVERB_APP_KEY or VITE_REVERB_HOST is not set, so this production build updates processing status by polling only."
+          fi
 
           if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
             echo "RENDER_DEPLOY_HOOK_URL secret is required."
