@@ -349,7 +349,7 @@ class ArticleFacetContractTest extends TestCase
             ->byUser($user)
             ->create(array_merge([
                 'publicity' => PublicityStatus::PUBLIC,
-                'status' => ArticleStatus::PENDING,
+                'status' => ArticleStatus::APPROVED,
             ], $overrides));
     }
 

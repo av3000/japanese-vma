@@ -65,13 +65,15 @@ final readonly class ArticleListFilterBuilder
         $ownerId = $scope->privateOwnerId();
 
         $builder->where(function (Builder $scoped) use ($ownerId): void {
-            $scoped->where('publicity', PublicityStatus::PUBLIC);
+            // Anyone sees a public article only once it is PROCESSED or APPROVED.
+            $scoped->where(function (Builder $moderated): void {
+                $moderated->where('publicity', PublicityStatus::PUBLIC)
+                    ->whereIn('articles.status', ArticleStatus::publiclyVisibleValues());
+            });
 
+            // The author keeps their own articles in every status and either publicity.
             if ($ownerId !== null) {
-                $scoped->orWhere(function (Builder $owned) use ($ownerId): void {
-                    $owned->where('publicity', PublicityStatus::PRIVATE)
-                        ->where('user_id', $ownerId);
-                });
+                $scoped->orWhere('user_id', $ownerId);
             }
         });
     }
