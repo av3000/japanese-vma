@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\FindArticlesTool;
 use App\Mcp\Tools\LookupKanjiTool;
 use App\Mcp\Tools\LookupWordTool;
 use Laravel\Mcp\Server;
@@ -25,5 +26,6 @@ class StudyServer extends Server
     protected array $tools = [
         LookupWordTool::class,
         LookupKanjiTool::class,
+        FindArticlesTool::class,
     ];
 }
