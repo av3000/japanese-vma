@@ -14,9 +14,11 @@ use App\Mcp\Support\DeckKind;
 final class DeckPresenter
 {
     /**
+     * @param DeckKind $kind the kind the page was asked for, which every list of the page has
+     *
      * @return array{uuid: string, title: string, description: ?string, kind: string, items_count: int}
      */
-    public function present(CatalogueListItemDTO $item): array
+    public function present(CatalogueListItemDTO $item, DeckKind $kind): array
     {
         $catalogue = $item->catalogue;
 
@@ -24,8 +26,7 @@ final class DeckPresenter
             'uuid' => $catalogue->getUid()->value(),
             'title' => (string) $catalogue->getTitle(),
             'description' => $catalogue->getDescription()->value,
-            // The tool only asks for the three kinds, so a list of any other type never reaches here.
-            'kind' => DeckKind::fromListType($catalogue->getType())?->value ?? $catalogue->getTypeLabel(),
+            'kind' => $kind->value,
             'items_count' => $item->itemsCount,
         ];
     }

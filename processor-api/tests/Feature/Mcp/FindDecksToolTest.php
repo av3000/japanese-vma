@@ -184,13 +184,10 @@ final class FindDecksToolTest extends TestCase
         $private = $this->createList($type, ['title' => 'Private list'], private: true);
         $this->addItems($private, $type, [201, 202]);
 
-        $response = StudyServer::tool(FindDecksTool::class, ['kind' => $kind, 'limit' => 20]);
-
-        $response->assertOk()
+        StudyServer::tool(FindDecksTool::class, ['kind' => $kind, 'limit' => 20])
+            ->assertOk()
             ->assertStructuredContentCount(1, 'results')
             ->assertStructuredContentPaths(['total' => 1, 'has_more' => false, 'results.0.uuid' => $public->uuid]);
-
-        $this->assertStringNotContainsString($private->uuid, (string) json_encode($response));
     }
 
     public function test_a_search_cannot_reach_a_private_list(): void

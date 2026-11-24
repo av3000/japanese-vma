@@ -6,6 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Application\Catalogues\Services\CatalogueServiceInterface;
 use App\Domain\Catalogues\DTOs\CatalogueListDTO;
+use App\Domain\Catalogues\DTOs\CatalogueListItemDTO;
 use App\Domain\Catalogues\DTOs\CatalogueListResultDTO;
 use App\Domain\Shared\ValueObjects\SearchTerm;
 use App\Mcp\Presenters\DeckPresenter;
@@ -54,9 +55,9 @@ class FindDecksTool extends Tool
             return ToolFailure::fromValidation($exception);
         }
 
-        $list = $catalogues->getCatalogueList($this->listRequest($input));
+        $kind = DeckKind::from($input['kind']);
 
-        return $this->respond($list);
+        return $this->respond($catalogues->getCatalogueList($this->listRequest($input, $kind)), $kind);
     }
 
     /**
@@ -106,10 +107,10 @@ class FindDecksTool extends Tool
         ];
     }
 
-    private function respond(CatalogueListResultDTO $list): Response|ResponseFactory
+    private function respond(CatalogueListResultDTO $list, DeckKind $kind): Response|ResponseFactory
     {
         return Response::structured([
-            'results' => array_map($this->presenter->present(...), $list->items),
+            'results' => array_map(fn (CatalogueListItemDTO $item): array => $this->presenter->present($item, $kind), $list->items),
             'total' => $list->pagination['total'],
             'has_more' => $list->pagination['has_more'],
         ]);
@@ -121,7 +122,7 @@ class FindDecksTool extends Tool
      *
      * @param array<string, mixed> $input
      */
-    private function listRequest(array $input): CatalogueListDTO
+    private function listRequest(array $input, DeckKind $kind): CatalogueListDTO
     {
         // Validation skips a blank query, and the value object refuses an empty one: blank means no search.
         $query = trim((string) ($input['query'] ?? ''));
@@ -129,7 +130,7 @@ class FindDecksTool extends Tool
         return new CatalogueListDTO(
             search: $query === '' ? null : $query,
             owner_uid: null,
-            type: DeckKind::from($input['kind'])->toListType()->value,
+            type: $kind->toListType()->value,
             sort_by: null,
             sort_dir: null,
             per_page: (int) ($input['limit'] ?? self::DEFAULT_LIMIT),
