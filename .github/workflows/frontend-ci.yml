@@ -333,7 +333,10 @@ jobs:
   image:
     name: Production image
     needs: image-changes
-    # `!cancelled()` lets this run on a push, where `image-changes` is skipped.
+    # Runs on a pull request when `image-changes` found image changes, and on every push to the
+    # default branch. `image-changes` only runs on pull requests, so on a push it is skipped, and
+    # GitHub skips every job that needs a skipped job unless its condition starts with
+    # `!cancelled()`. That prefix is what lets this job run on a push.
     if: >-
       !cancelled() && (
         (github.event_name == 'pull_request' && needs.image-changes.outputs.image == 'true') ||
@@ -495,7 +498,16 @@ jobs:
     name: Deploy production frontend
     runs-on: ubuntu-latest
     needs: image
-    if: github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    # Deploys on a push to the default branch once `image` has pushed the new image. A plain
+    # condition would never run here: `image` needs `image-changes`, which is skipped on every
+    # push, and GitHub skips a job when any job earlier in its chain was skipped unless the
+    # condition starts with `!cancelled()`. Checking `needs.image.result` keeps the deploy from
+    # running when the image job failed, was cancelled or was skipped.
+    if: >-
+      !cancelled() &&
+      github.event_name == 'push' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      needs.image.result == 'success'
     permissions:
       contents: read
     steps:
