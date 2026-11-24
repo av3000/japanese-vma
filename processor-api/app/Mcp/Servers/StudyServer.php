@@ -6,6 +6,7 @@ namespace App\Mcp\Servers;
 
 use App\Mcp\Tools\FindArticlesTool;
 use App\Mcp\Tools\FindDecksTool;
+use App\Mcp\Tools\GetFlashcardsTool;
 use App\Mcp\Tools\LookupKanjiTool;
 use App\Mcp\Tools\LookupWordTool;
 use App\Mcp\Tools\ReadArticleTool;
@@ -31,5 +32,6 @@ class StudyServer extends Server
         FindArticlesTool::class,
         ReadArticleTool::class,
         FindDecksTool::class,
+        GetFlashcardsTool::class,
     ];
 }

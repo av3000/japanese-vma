@@ -50,6 +50,7 @@ final class StudyServerRouteTest extends TestCase
         $this->assertContains('find_articles', array_column($tools, 'name'));
         $this->assertContains('read_article', array_column($tools, 'name'));
         $this->assertContains('find_decks', array_column($tools, 'name'));
+        $this->assertContains('get_flashcards', array_column($tools, 'name'));
 
         foreach ($tools as $tool) {
             $this->assertTrue($tool['annotations']['readOnlyHint'], $tool['name'].' must be read-only');
