@@ -25,7 +25,9 @@ The epic agent creates the file with a header the first time:
 Started 2026-11-06 by the epic agent (start-epic-workflow).
 ```
 
-Each story gets a section, opened by the epic agent **before** it starts the story session, so the session's first row lands under it:
+The pool start goes under the header: one row per session, with its `local_…` id and the story or role it is for.
+
+Each story gets a section, opened by the epic agent **before** it releases the story session (`GO`), so the session's first row lands under it:
 
 ```markdown
 ## TRANSLATIONS-01 · #660 · claude/translations-01-be9ac1 → PR #668
