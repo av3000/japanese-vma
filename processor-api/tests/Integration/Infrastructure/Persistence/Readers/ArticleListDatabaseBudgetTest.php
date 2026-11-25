@@ -149,7 +149,7 @@ class ArticleListDatabaseBudgetTest extends TestCase
                 'title_jp' => 'Article '.$i,
                 'title_en' => 'Article '.$i,
                 'publicity' => PublicityStatus::PUBLIC,
-                'status' => ArticleStatus::PENDING,
+                'status' => ArticleStatus::APPROVED,
                 'n5' => $i % 3,
                 'n2' => $i % 2,
             ]);

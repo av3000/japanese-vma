@@ -63,7 +63,7 @@ class ShowArticleTest extends TestCase
             'content_en' => 'English content text.',
             'source_link' => 'https://example.com/source',
             'publicity' => PublicityStatus::PUBLIC,
-            'status' => ArticleStatus::PENDING,
+            'status' => ArticleStatus::APPROVED,
             'n1' => 0,
             'n2' => 0,
             'n3' => 0,

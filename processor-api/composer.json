@@ -16,6 +16,7 @@
         "guzzlehttp/guzzle": "^7.8",
         "laravel/framework": "^12.0",
         "laravel/horizon": "^5.41",
+        "laravel/mcp": "^1.2",
         "laravel/passport": "^12.0",
         "laravel/reverb": "^1.6",
         "laravel/telescope": "^5.16",
@@ -26,7 +27,7 @@
     "require-dev": {
         "fakerphp/faker": "1.23.1",
         "larastan/larastan": "^3.9",
-        "laravel/boost": "^2.4",
+        "laravel/boost": "^2.10",
         "laravel/pint": "1.15.2",
         "laravel/sail": "^1.57",
         "mockery/mockery": "1.6.12",

@@ -373,7 +373,7 @@ class WordV1Test extends TestCase
                 'content_en' => 'English content text.',
                 'source_link' => 'https://example.com/source',
                 'publicity' => PublicityStatus::PUBLIC->value,
-                'status' => ArticleStatus::PENDING->value,
+                'status' => ArticleStatus::APPROVED->value,
                 'n1' => 0,
                 'n2' => 0,
                 'n3' => 0,

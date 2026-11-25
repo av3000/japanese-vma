@@ -38,12 +38,12 @@ class ArticlePolicy
      */
     public function canView(?AuthenticatedUser $authenticatedUser, Article $article): bool
     {
-        // Public articles are viewable by everyone
-        if ($article->getPublicity() === PublicityStatus::PUBLIC) {
+        // A public article is viewable by everyone once it is PROCESSED or APPROVED.
+        if ($article->getPublicity() === PublicityStatus::PUBLIC && $article->getStatus()->isPubliclyVisible()) {
             return true;
         }
 
-        // Anonymous users can't view private articles
+        // Anonymous users can't view private or unmoderated articles
         if ($authenticatedUser === null) {
             return false;
         }
@@ -53,7 +53,7 @@ class ArticlePolicy
             return true;
         }
 
-        // Users can view their own private articles
+        // Users can view their own articles, in every status
         return $authenticatedUser->id->equals($article->getAuthorId());
     }
 

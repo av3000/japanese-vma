@@ -90,6 +90,20 @@ Backend Compose commands run from `processor-api/`; frontend Compose commands ru
 
 The backend Compose topology provides the application/web services plus dedicated database and test-runner services. Backend database tests must use the isolated `db-test` and `test-runner` lane rather than host PHP, the development database, or SQLite substitutes.
 
+## Study MCP Server
+
+The Laravel web service can also serve a public, read-only MCP endpoint at `/mcp/study` (ADR 0003). It runs inside the same service as the REST API: no extra process, host or data store.
+
+| Setting | Default | Effect |
+|---|---|---|
+| `STUDY_MCP_ENABLED` | on unless `APP_ENV=production` | Registers the route. Production stays off until a maintainer sets it to `true`. |
+| `STUDY_MCP_RATE_PER_MINUTE` | `30` | Requests per minute per client IP address, through the `mcp` rate limiter next to `api`, `public` and `search-counts` in `RouteServiceProvider`. |
+
+- The limiter's counters live in the default cache store (`CACHE_DRIVER`). With a per-instance store such as `file`, each web instance counts on its own; only a shared store such as Redis gives one bucket across instances.
+- The key is `$request->ip()`. Whether that is the caller's real address behind Render's proxy depends on the trusted-proxy setting, which is not configured yet (#648); until it is, callers may share one bucket. That is why switching the route on in production is a separate, human step (#716).
+- Hosted assistants (claude.ai, ChatGPT) call from their vendor's servers, so all of their users share one bucket.
+- Setup steps for clients are in the "Study MCP server" section of `processor-api/README.md`.
+
 ## Retained Operational Endpoints
 
 Session authentication is served only by `api/v1/*` (`register`, `login`, `logout`, `me`). The
