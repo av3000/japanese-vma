@@ -17,7 +17,7 @@ The backend, worker, and frontend all contain Laravel Reverb integration, but no
    - worker env (`.gitlab-ci.yml` `prepare_queue_runtime_env`): `BROADCAST_DRIVER=reverb`, `REVERB_APP_ID/KEY/SECRET`, `REVERB_HOST=<reverb-service-host>`, `REVERB_PORT=443`, `REVERB_SCHEME=https`;
    - Render web service: the same broadcast variables (the web process broadcasts `pending` after ADR 0001);
    - Reverb service: `REVERB_APP_*`, `REVERB_SERVER_HOST=0.0.0.0`, `REVERB_SERVER_PORT=$PORT`, `allowed_origins` restricted to the frontend origin, scaling disabled;
-   - frontend CI (`.github/workflows/frontend-ci.yml`): `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT=443`, `VITE_REVERB_SCHEME=https` as repository variables, with a hard failure when missing.
+   - frontend CI (`.github/workflows/frontend-ci.yml`): `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT=443`, `VITE_REVERB_SCHEME=https` as repository variables. When the key or host is missing, the release builds anyway and shows a warning, because polling (decision 1) keeps the UI correct without a socket.
 4. **Channel authorisation follows article visibility** (owner, admin, or public article), not "any authenticated user". Anonymous viewers rely on polling.
 5. **Lists do not open one channel per article.** The owner dashboard uses one `App.User.{id}` channel; public lists rely on polling; the detail page keeps its per-article channel.
 6. **Broadcasts are synchronous from the producer** (`ShouldBroadcastNow`, snapshotted payload), per P0-3.

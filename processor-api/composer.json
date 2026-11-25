@@ -92,7 +92,10 @@
         "format:check": "vendor/bin/pint --test",
         "stan": "vendor/bin/phpstan analyse --memory-limit=1G",
         "test:prepare": "php artisan migrate:fresh --force",
-        "test": "vendor/bin/phpunit --colors=always",
+        "test": [
+            "Composer\\Config::disableProcessTimeout",
+            "vendor/bin/phpunit --colors=always"
+        ],
         "quality": [
             "@format",
             "@stan",

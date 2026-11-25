@@ -66,6 +66,8 @@ The user may override any row. Change nothing until the user confirms the table.
    }'
    ```
 
+   Keep the query inline and the reply text in `reply.md`, as above. The merge guard denies a `gh api graphql` command whose query comes from a file, stdin or a shell expansion, or that has a backtick anywhere in it.
+
    Top-level PR comments and review bodies have no thread: answer them in one `'/c/Program Files/GitHub CLI/gh.exe' pr comment <pr> --body-file reply.md`.
 4. **Resolve:**
    - Fix threads, once replied.
